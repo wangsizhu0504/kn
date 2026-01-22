@@ -46,7 +46,7 @@ cargo install kn
 
 ### Build from Source
 ```bash
-git clone https://github.com/your-username/kn
+git clone https://github.com/wangsizhu0504/kn
 cd kn
 cargo build --release
 ```
@@ -54,7 +54,7 @@ cargo build --release
 ### Quick Installation Script
 ```bash
 # Clone and build
-git clone https://github.com/your-username/kn
+git clone https://github.com/wangsizhu0504/kn
 cd kn
 chmod +x install-kn.sh
 ./install-kn.sh
@@ -339,76 +339,8 @@ Package Manager Information
 ────────────────────
 ✅ Found matching lock file: package-lock.json
 ▸ Runtime Information
-──────────────────────   # Main entry point
-│   ├── agents.rs           # Package manager definitions
-│   ├── cli_parser.rs       # Custom CLI argument parser (no clap!)
-│   ├── command/            # Command handlers
-│   │   ├── install.rs      # Package installation
-│   │   ├── run.rs          # Script execution with fuzzy search
-│   │   ├── list.rs         # Script listing with dashboard UI
-│   │   ├── uninstall.rs    # Package removal
-│   │   ├── execute.rs      # Direct binary execution
-│   │   ├── upgrade.rs      # Dependency updates
-│   │   ├── clean_install.rs
-│   │   ├── agent.rs        # Direct package manager access
-│   │   ├── info.rs         # Environment information
-│   │   ├── watch.rs        # File watching
-│   │   ├── history.rs      # Command history tracking
-│   │   ├── alias.rs        # Script alias management
-│   │   ├── stats.rs        # Performance statistics
-│   │   ├── parallel.rs     # Parallel script execution
-│   │   ├── clean.rs        # Project cleanup
-│   │   ├── analyze.rs      # Dependency analysis
-│   │   ├── cli.rs          # Command dispatcher
-│   │   └── mod.rs
-│   ├── command_utils.rs    # Package.json utilities
-│   ├── config.rs           # Configuration management
-│   ├── detect.rs           # Package manager detection
-│   ├── runner.rs           # Command execution engine
-│   ├── display.rs          # Styled output and ASCII art
-│   ├── storage.rs          # Persistent storage for history/aliases
-│   ├── utils.rs            # General utilities
-│   └── test.rs             # Comprehensive test suite
-├── Cargo.toml
-├── README.md
-├── NEW_FEATURES.md         # Detailed new features documentation
-├── install-kn.sh          # Installation script
-└── test-project/          # Test project for developmen logic
-│   ├── runner.rs    all 19 commands)
-- ✅ CLI interface (help, version, history, aliases)
-- ✅ Fuzzy search algorithm
-- ✅ Performance tracking
-- ✅ Edge cases and error handling
+──────────────────────
 
-### Running Tests
-
-```bash
-# Run all tests
-cargo test
-
-# Run specific test
-cargo test test_package_parsing
-
-# Run tests with output
-cargo test -- --nocapture
-
-# Run tests in release mode
-cargo test --release
-```
-
-All tests pass: **16/16 ✅**
-```bash
-# Run all tests
-cargo test
-
-# Run specific test
-cargo test test_package_parsing
-
-# Run tests with output
-cargo test -- --nocapture
-```
-
-### Quick Test Script
 ### Configuration File
 
 Create a `~/.knrc` file to configure defaults:
@@ -433,13 +365,6 @@ kn stores persistent data in `~/.tmp/kn/_storage.json`:
 This data persists across sessions and is automatically managed.ini
 default_agent = npm    # fallback when no lock found
 global_agent = npm      # for global installs
-### Script Execution Benchmarks
-- **kn**: ~1.6ms ⚡ (fastest)
-- bun: ~4.2ms
-- node --run: ~6.1ms
-- npm: ~154.6ms
-- yarn: ~306.1ms
-- pnpm: ~463.2ms
 
 ## 🎨 Command Overview
 
@@ -492,44 +417,3 @@ Saved: ~1.7s
 - **Startup Time**: < 10ms
 
 ---
-
-<p align="center">
-  Made with ❤️ and ⚡ in Rust
-  <br>
-  <strong>Fast. Smart. Beautiful.</strong>
-git clone https://github.com/your-username/kn
-cd kn
-
-# Build
-cargo build
-
-# Run tests
-cargo test
-
-# Build release version
-cargo build --release
-
-# Install locally
-cargo install --path .
-```
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-### Development Setup
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new functionality
-5. Ensure all tests pass (`cargo test`)
-6. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-<p align="center">
-  Made with ❤️ in Rust
-</p>
