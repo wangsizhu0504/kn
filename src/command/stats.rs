@@ -79,3 +79,46 @@ pub fn record_execution(script_name: &str, duration_ms: u64) {
         let _ = crate::storage::dump(storage);
     }
 }
+
+#[derive(Clone)]
+pub struct StatInfo {
+    pub script: String,
+    pub count: u32,
+    pub average_time: u64,
+    pub last_run: Option<u64>,
+}
+
+pub fn get_all_stats() -> Vec<StatInfo> {
+    load();
+    let storage = STORAGE.lock();
+
+    if let Some(storage) = storage.as_ref() {
+        storage.script_stats
+            .iter()
+            .map(|(name, stat)| {
+                let avg_time = if stat.total_runs > 0 {
+                    stat.total_time_ms / stat.total_runs as u64
+                } else {
+                    0
+                };
+
+                // Parse last_run date string to timestamp
+                let last_run_timestamp = chrono::NaiveDate::parse_from_str(&stat.last_run, "%Y-%m-%d")
+                    .ok()
+                    .and_then(|date| {
+                        date.and_hms_opt(0, 0, 0)
+                            .map(|dt| dt.and_utc().timestamp() as u64)
+                    });
+
+                StatInfo {
+                    script: name.clone(),
+                    count: stat.total_runs,
+                    average_time: avg_time,
+                    last_run: last_run_timestamp,
+                }
+            })
+            .collect()
+    } else {
+        Vec::new()
+    }
+}

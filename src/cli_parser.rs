@@ -43,12 +43,13 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
         "list", "ls",
         "info", "env",
         "watch", "w",
-        "history", "hist",
-        "alias",
         "stats",
         "parallel", "p",
         "clean",
         "analyze",
+        "doctor",
+        "size",
+        "completion",
         "help",
     ];
 
@@ -146,18 +147,6 @@ pub enum Commands {
         script_name: String,
         patterns: Vec<String>,
     },
-    History {
-        count: Option<usize>,
-    },
-    HistoryRun {
-        index: usize,
-    },
-    HistoryLast,
-    Alias {
-        action: Option<String>,
-        key: Option<String>,
-        value: Option<String>,
-    },
     Stats,
     Parallel {
         scripts: Vec<String>,
@@ -168,6 +157,11 @@ pub enum Commands {
         global: bool,
     },
     Analyze,
+    Doctor,
+    Size,
+    Completion {
+        shell: Option<String>,
+    },
     Help,
 }
 
@@ -246,23 +240,6 @@ impl Cli {
                 i += 1;
                 parse_watch_command(&args, &mut i)?
             }
-            "history" | "hist" => {
-                i += 1;
-                parse_history_command(&args, &mut i)?
-            }
-            "!!" => Commands::HistoryLast,
-            cmd if cmd.starts_with('!') && cmd.len() > 1 => {
-                // Parse !N format
-                if let Ok(index) = cmd[1..].parse::<usize>() {
-                    Commands::HistoryRun { index }
-                } else {
-                    return Err(format_error("Invalid history index"));
-                }
-            }
-            "alias" => {
-                i += 1;
-                parse_alias_command(&args, &mut i)?
-            }
             "stats" => Commands::Stats,
             "parallel" | "p" => {
                 i += 1;
@@ -273,6 +250,12 @@ impl Cli {
                 parse_clean_command(&args, &mut i)?
             }
             "analyze" => Commands::Analyze,
+            "doctor" => Commands::Doctor,
+            "size" => Commands::Size,
+            "completion" => {
+                i += 1;
+                parse_completion_command(&args, &mut i)?
+            }
             "help" | "--help" | "-h" => Commands::Help,
             "--version" | "-v" => {
                 println!("kn version {}", env!("CARGO_PKG_VERSION"));
@@ -536,67 +519,6 @@ fn parse_watch_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     })
 }
 
-fn parse_history_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
-    let count = if *i < args.len() {
-        match args[*i].parse::<usize>() {
-            Ok(n) => {
-                *i += 1;
-                Some(n)
-            }
-            Err(_) => None,
-        }
-    } else {
-        None
-    };
-
-    Ok(Commands::History { count })
-}
-
-fn parse_alias_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
-    let action = if *i < args.len() {
-        Some(args[*i].clone())
-    } else {
-        None
-    };
-
-    if action.as_deref() == Some("set") || action.as_deref() == Some("add") {
-        *i += 1;
-        let key = if *i < args.len() {
-            let k = args[*i].clone();
-            *i += 1;
-            Some(k)
-        } else {
-            None
-        };
-
-        let value = if *i < args.len() {
-            let v = args[*i].clone();
-            *i += 1;
-            Some(v)
-        } else {
-            None
-        };
-
-        Ok(Commands::Alias { action, key, value })
-    } else if action.as_deref() == Some("remove") || action.as_deref() == Some("rm") || action.as_deref() == Some("delete") {
-        *i += 1;
-        let key = if *i < args.len() {
-            let k = args[*i].clone();
-            *i += 1;
-            Some(k)
-        } else {
-            None
-        };
-
-        Ok(Commands::Alias { action, key, value: None })
-    } else {
-        if action.is_some() {
-            *i += 1;
-        }
-        Ok(Commands::Alias { action, key: None, value: None })
-    }
-}
-
 fn parse_parallel_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
     let mut scripts = Vec::new();
 
@@ -627,4 +549,16 @@ fn parse_clean_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     }
 
     Ok(Commands::Clean { cache, all, global })
+}
+
+fn parse_completion_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
+    let shell = if *i < args.len() {
+        let s = args[*i].clone();
+        *i += 1;
+        Some(s)
+    } else {
+        None
+    };
+
+    Ok(Commands::Completion { shell })
 }

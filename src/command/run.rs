@@ -1,30 +1,23 @@
 use crate::command_utils::{run_script_fast, parse_package_json};
 use crate::display::StyledOutput;
-use crate::command::alias;
 use crate::command::stats;
-use crate::command::history;
+use inquire::Select;
 
 pub fn handle(script_name: Option<String>, args: Vec<String>, _if_present: bool) -> Result<(), Box<dyn std::error::Error>> {
     match script_name {
         Some(script) => {
-            // Check if it's an alias first
-            let resolved_script = alias::resolve_alias(&script).unwrap_or(script.clone());
-
             // Try fuzzy match if script not found
-            let final_script = if script_exists(&resolved_script) {
-                resolved_script
+            let final_script = if script_exists(&script) {
+                script
             } else {
-                match fuzzy_find_script(&resolved_script)? {
+                match fuzzy_find_script(&script)? {
                     Some(found) => {
                         println!("\x1b[90mDid you mean '\x1b[36m{}\x1b[90m'? Running it...\x1b[0m\n", found);
                         found
                     }
-                    None => resolved_script
+                    None => script
                 }
             };
-
-            // Record in history
-            history::add_to_history(&format!("run {}", final_script));
 
             // Measure execution time
             let start = std::time::Instant::now();
@@ -144,25 +137,127 @@ fn show_available_scripts() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    println!("");
-    println!("\x1b[33m⚠\x1b[0m  Missing script name");
-    println!("");
-    println!("\x1b[1mAvailable scripts:\x1b[0m");
-    println!("");
+    // Get execution stats for sorting
+    let all_stats = stats::get_all_stats();
 
-    // Display scripts in a clean list
-    for (name, cmd) in scripts.iter() {
-        let display_cmd = if cmd.len() > 60 {
-            format!("{}...", &cmd[..57])
-        } else {
-            cmd.to_string()
-        };
-        println!("  \x1b[36m{:<15}\x1b[0m \x1b[90m{}\x1b[0m", name, display_cmd);
+    // Create script items with stats
+    let mut script_items: Vec<ScriptItem> = scripts
+        .iter()
+        .map(|(name, cmd)| {
+            let stat = all_stats.iter().find(|s| &s.script == name);
+            ScriptItem {
+                name: name.clone(),
+                command: cmd.clone(),
+                runs: stat.map(|s| s.count).unwrap_or(0),
+                last_run: stat.and_then(|s| s.last_run),
+                avg_time: stat.map(|s| s.average_time).unwrap_or(0),
+            }
+        })
+        .collect();
+
+    // Sort by run count (most used first)
+    script_items.sort_by(|a, b| b.runs.cmp(&a.runs));
+
+    StyledOutput::header("Available Scripts");
+    println!();
+
+    // Interactive selection
+    let options: Vec<String> = script_items
+        .iter()
+        .map(|item| format_script_option(item))
+        .collect();
+
+    match Select::new("Select a script to run:", options).prompt() {
+        Ok(selection) => {
+            // Extract script name from selection
+            if let Some(item) = script_items.iter().find(|item| {
+                selection.starts_with(&format!("{} ", item.name))
+            }) {
+                // Measure execution time
+                let start = std::time::Instant::now();
+                println!();
+                let result = run_script_fast(&item.name, &[]);
+                let duration = start.elapsed();
+
+                // Record stats
+                if result.is_ok() {
+                    stats::record_execution(&item.name, duration.as_millis() as u64);
+                    println!("\n\x1b[90m✓ Completed in {:.2}s\x1b[0m", duration.as_secs_f64());
+                }
+
+                result?;
+            }
+        }
+        Err(_) => {
+            println!("\nCancelled");
+        }
     }
 
-    println!("");
-    println!("\x1b[90mUsage:\x1b[0m kn run \x1b[36m<script>\x1b[0m");
-    println!("");
-
     Ok(())
+}
+
+#[derive(Clone)]
+struct ScriptItem {
+    name: String,
+    command: String,
+    runs: u32,
+    last_run: Option<u64>,
+    avg_time: u64,
+}
+
+fn format_script_option(item: &ScriptItem) -> String {
+    let mut parts = vec![item.name.clone()];
+
+    // Show command preview
+    let cmd_preview = if item.command.len() > 50 {
+        format!("{}...", &item.command[..47])
+    } else {
+        item.command.clone()
+    };
+    parts.push(format!("\x1b[90m{}\x1b[0m", cmd_preview));
+
+    // Show stats if available
+    if item.runs > 0 {
+        let mut stats_parts = Vec::new();
+
+        // Run count
+        if item.runs > 0 {
+            stats_parts.push(format!("⚡ {}", item.runs));
+        }
+
+        // Average time
+        if item.avg_time > 0 {
+            let time_str = if item.avg_time < 1000 {
+                format!("{}ms", item.avg_time)
+            } else {
+                format!("{:.1}s", item.avg_time as f64 / 1000.0)
+            };
+            stats_parts.push(format!("⏱️ {}", time_str));
+        }
+
+        // Last run
+        if let Some(last_run) = item.last_run {
+            let now = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_secs();
+            let diff = now - last_run;
+            let time_ago = if diff < 60 {
+                "just now".to_string()
+            } else if diff < 3600 {
+                format!("{}m ago", diff / 60)
+            } else if diff < 86400 {
+                format!("{}h ago", diff / 3600)
+            } else {
+                format!("{}d ago", diff / 86400)
+            };
+            stats_parts.push(format!("🕒 {}", time_ago));
+        }
+
+        if !stats_parts.is_empty() {
+            parts.push(format!("\x1b[36m[{}]\x1b[0m", stats_parts.join(" ")));
+        }
+    }
+
+    parts.join(" ")
 }

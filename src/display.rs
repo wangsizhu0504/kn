@@ -1,9 +1,14 @@
-// Minimal, dependency-free UI outputs for compilation stability.
-static PACKAGE: &str = "📦";
-static INFO: &str = "ℹ️";
-static SUCCESS: &str = "✅";
-static WARNING: &str = "⚠️";
-static ERROR: &str = "❌";
+use console::{style, Emoji, Term};
+use indicatif::{ProgressBar, ProgressStyle, MultiProgress};
+use comfy_table::{Table, Cell, Color as TableColor, Attribute, ContentArrangement, presets::UTF8_FULL};
+
+// Emoji constants
+static PACKAGE: Emoji<'_, '_> = Emoji("📦  ", "[PKG] ");
+static INFO: Emoji<'_, '_> = Emoji("ℹ️  ", "[INFO] ");
+static SUCCESS: Emoji<'_, '_> = Emoji("✅  ", "[OK] ");
+static WARNING: Emoji<'_, '_> = Emoji("⚠️  ", "[WARN] ");
+static ERROR: Emoji<'_, '_> = Emoji("❌  ", "[ERR] ");
+static CHART: Emoji<'_, '_> = Emoji("📊  ", "[STAT] ");
 
 // ASCII art for KN
 const KN_ASCII: &str = r#"
@@ -17,44 +22,64 @@ const KN_ASCII: &str = r#"
 
 pub struct StyledOutput;
 
-pub struct Spinner;
+pub struct Spinner {
+    pb: Option<ProgressBar>,
+}
+
 impl Drop for Spinner {
     fn drop(&mut self) {
-        // no-op
+        if let Some(pb) = &self.pb {
+            pb.finish_and_clear();
+        }
     }
 }
 
 impl StyledOutput {
     pub fn header(text: &str) {
-        println!("");
-        println!("{}", text);
-        println!("{}", "-".repeat(text.len() + 4));
-        println!("{}", "");
-        println!("{}", "");
+        let term = Term::stdout();
+        let width = term.size().1 as usize;
+        println!("\n{}", style(text).bold().cyan());
+        println!("{}", style("─".repeat(width.min(80))).dim());
     }
 
     pub fn success(text: &str) {
-        println!("{} {}", SUCCESS, text);
+        println!("{}{}", SUCCESS, style(text).green());
     }
 
     pub fn error(text: &str) {
-        eprintln!("{} {}", ERROR, text);
+        eprintln!("{}{}", ERROR, style(text).red().bold());
     }
 
     pub fn warning(text: &str) {
-        println!("{} {}", WARNING, text);
+        println!("{}{}", WARNING, style(text).yellow());
     }
 
     pub fn info(text: &str) {
-        println!("{} {}", INFO, text);
+        println!("{}{}", INFO, style(text).cyan());
     }
 
     pub fn package_info(name: &str, version: &str, manager: &str) {
-        println!("{} {} {} ({})", PACKAGE, name, version, manager);
+        println!(
+            "{}{} {} {}",
+            PACKAGE,
+            style(name).bold(),
+            style(version).dim(),
+            style(format!("({})", manager)).dim()
+        );
     }
 
-    pub fn working(_text: &str) -> Spinner {
-        Spinner
+    pub fn working(text: &str) -> Spinner {
+        let pb = ProgressBar::new_spinner();
+        pb.set_style(
+            ProgressStyle::default_spinner()
+                .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+                .template("{spinner:.cyan} {msg}")
+                .unwrap(),
+        );
+        pb.set_message(text.to_string());
+        pb.enable_steady_tick(std::time::Duration::from_millis(80));
+
+        Spinner { pb: Some(pb) }
     }
 
     pub fn opencode_header() {
@@ -93,14 +118,13 @@ impl StyledOutput {
             ("list", "ls", "Show available package scripts", "\x1b[96m"),
             ("info", "env", "Show package manager and environment information", "\x1b[93m"),
             ("watch", "w", "Watch files and re-run script on changes", "\x1b[35m"),
-            ("history", "hist", "Show command history", "\x1b[94m"),
-            ("!!", "", "Re-run last command", "\x1b[90m"),
-            ("!N", "", "Re-run command N from history", "\x1b[90m"),
-            ("alias", "", "Manage script aliases", "\x1b[92m"),
             ("stats", "", "Show script performance statistics", "\x1b[93m"),
             ("parallel", "p", "Run multiple scripts in parallel", "\x1b[95m"),
             ("clean", "", "Clean node_modules, cache, etc.", "\x1b[31m"),
             ("analyze", "", "Analyze project dependencies", "\x1b[96m"),
+            ("doctor", "", "Check project health and configuration", "\x1b[92m"),
+            ("size", "", "Analyze package sizes", "\x1b[94m"),
+            ("completion", "", "Generate shell completion scripts", "\x1b[90m"),
             ("help", "", "Show this help message", "\x1b[37m"),
         ];
 
@@ -176,10 +200,60 @@ impl StyledOutput {
     }
 
     pub fn section_title(title: &str) {
-        println!("\n");
-        println!("{}", title);
-        println!("{}", "-".repeat(title.len()));
-        println!("");
+        println!();
+        println!("  {}", style(title).bold().underlined().cyan());
+        println!();
+    }
+
+    pub fn check_item(passed: bool, message: &str) {
+        if passed {
+            println!("  {} {}", style("●").green().bold(), style(message).dim());
+        } else {
+            println!("  {} {}", style("●").red().bold(), style(message).dim());
+        }
+    }
+
+    pub fn detail_item(icon: &str, message: &str) {
+        println!("    {} {}", style(icon).dim(), style(message).dim());
+    }
+
+    pub fn summary_box(title: &str, good: usize, warnings: usize, errors: usize) {
+        let mut table = Table::new();
+        table
+            .load_preset(UTF8_FULL)
+            .set_content_arrangement(ContentArrangement::Dynamic);
+
+        println!("\n{}{}", CHART, style(title).bold().cyan());
+
+        if good > 0 {
+            table.add_row(vec![
+                Cell::new("✓ Passed").fg(TableColor::Green).add_attribute(Attribute::Bold),
+                Cell::new(good.to_string()).fg(TableColor::Green),
+            ]);
+        }
+
+        if warnings > 0 {
+            table.add_row(vec![
+                Cell::new("⚠ Warnings").fg(TableColor::Yellow).add_attribute(Attribute::Bold),
+                Cell::new(warnings.to_string()).fg(TableColor::Yellow),
+            ]);
+        }
+
+        if errors > 0 {
+            table.add_row(vec![
+                Cell::new("✗ Errors").fg(TableColor::Red).add_attribute(Attribute::Bold),
+                Cell::new(errors.to_string()).fg(TableColor::Red),
+            ]);
+        }
+
+        if good == 0 && warnings == 0 && errors == 0 {
+            table.add_row(vec![
+                Cell::new("No checks performed").fg(TableColor::Grey),
+                Cell::new("-"),
+            ]);
+        }
+
+        println!("{}", table);
     }
 
     pub fn key_value(key: &str, value: &str) {
