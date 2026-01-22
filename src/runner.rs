@@ -118,6 +118,15 @@ pub fn run(func: Runner, args: Vec<String>, options: &mut DetectOptions) -> Resu
 
 type CommandResult = Result<Option<(String, Vec<String>)>, Box<dyn std::error::Error>>;
 
+// Public function to get command without executing
+pub fn get_cli_command_direct(
+    func: Runner,
+    args: Vec<String>,
+    options: DetectOptions,
+) -> CommandResult {
+    get_cli_command(func, args, options)
+}
+
 fn get_cli_command(
     func: Runner,
     args: Vec<String>,
@@ -132,7 +141,7 @@ fn get_cli_command(
     } else {
         get_default_agent(options.programmatic)
     };
-    
+
     if agent == DefaultAgent::Prompt {
         let items: Vec<&str> = AGENT_MAP.iter().filter(|(name, _)| !name.contains("@")).map(|(name, _)| *name).collect();
         let selection = Select::new("script to run:", items).prompt();

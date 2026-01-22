@@ -307,13 +307,7 @@ fn parse_install_command(args: &[String], i: &mut usize) -> Result<Commands, Str
         *i += 1;
     }
 
-    if packages.is_empty() {
-        return Err(format_error_with_suggestion(
-            "Install command requires at least one package name",
-            "Usage: kn install <package> [options]"
-        ));
-    }
-
+    // Allow install without packages (installs all dependencies from package.json)
     Ok(Commands::Install {
         packages,
         dev,
