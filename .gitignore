@@ -1,1 +1,7 @@
-/target
+.DS_Store
+
+target/
+result*
+
+.vscode/
+.idea/
