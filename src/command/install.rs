@@ -2,8 +2,11 @@ use crate::parse::parse_ni;
 use crate::runner::{run_cli, get_cli_command_direct, DetectOptions};
 use crate::display::StyledOutput;
 use std::process::{Command, Stdio};
-use std::io::{BufRead, BufReader};
+use std::io::{BufRead, BufReader, Write};
 use std::time::Instant;
+use std::thread;
+use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::sync::mpsc;
 
 pub fn handle(packages: Vec<String>, dev: bool, global: bool, exact: bool) -> Result<(), Box<dyn std::error::Error>> {
     let mut args = packages.clone();
@@ -70,6 +73,28 @@ fn install_with_progress(
     StyledOutput::section_title(&format!("Using {}", agent));
     println!();
 
+    // Start progress spinner
+    let running = Arc::new(AtomicBool::new(true));
+    let running_clone = running.clone();
+
+    let (tx, rx) = mpsc::channel();
+
+    let spinner_thread = thread::spawn(move || {
+        let spinner_chars = ['⠋', '⠙', '⠹', '⠸', '⠼', '⠴', '⠦', '⠧', '⠇', '⠏'];
+        let mut idx = 0;
+
+        while running_clone.load(Ordering::Relaxed) {
+            print!("\r  {} Installing packages...", spinner_chars[idx]);
+            std::io::stdout().flush().ok();
+            idx = (idx + 1) % spinner_chars.len();
+            thread::sleep(std::time::Duration::from_millis(80));
+        }
+
+        // Clear spinner line
+        print!("\r\x1B[2K");
+        std::io::stdout().flush().ok();
+    });
+
     // Execute command
     let mut child = Command::new(agent)
         .args(args)
@@ -77,25 +102,64 @@ fn install_with_progress(
         .stderr(Stdio::piped())
         .spawn()?;
 
-    // Capture and display output with filtering
-    if let Some(stdout) = child.stdout.take() {
-        let reader = BufReader::new(stdout);
-        for line in reader.lines().flatten() {
-            // Filter out some verbose lines, show important ones
-            if should_display_line(&line) {
+    // Read stdout in separate thread
+    let stdout = child.stdout.take();
+    let tx_stdout = tx.clone();
+    let stdout_thread = if let Some(stdout) = stdout {
+        Some(thread::spawn(move || {
+            let reader = BufReader::new(stdout);
+            for line in reader.lines().flatten() {
+                tx_stdout.send(("stdout", line)).ok();
+            }
+        }))
+    } else {
+        None
+    };
+
+    // Read stderr in separate thread
+    let stderr = child.stderr.take();
+    let tx_stderr = tx.clone();
+    let stderr_thread = if let Some(stderr) = stderr {
+        Some(thread::spawn(move || {
+            let reader = BufReader::new(stderr);
+            for line in reader.lines().flatten() {
+                tx_stderr.send(("stderr", line)).ok();
+            }
+        }))
+    } else {
+        None
+    };
+
+    // Display output as it comes
+    drop(tx); // Close sender in main thread
+    for (source, line) in rx {
+        if should_display_line(&line) {
+            // Stop spinner temporarily to show the line
+            running.store(false, Ordering::Relaxed);
+            thread::sleep(std::time::Duration::from_millis(100));
+
+            if source == "stderr" {
+                StyledOutput::warning(&format!("  {}", line));
+            } else {
                 println!("  {}", line);
             }
+
+            // Resume spinner
+            running.store(true, Ordering::Relaxed);
         }
     }
 
-    if let Some(stderr) = child.stderr.take() {
-        let reader = BufReader::new(stderr);
-        for line in reader.lines().flatten() {
-            if should_display_line(&line) {
-                StyledOutput::warning(&line);
-            }
-        }
+    // Stop spinner
+    running.store(false, Ordering::Relaxed);
+
+    // Wait for threads
+    if let Some(t) = stdout_thread {
+        t.join().ok();
     }
+    if let Some(t) = stderr_thread {
+        t.join().ok();
+    }
+    spinner_thread.join().ok();
 
     let status = child.wait()?;
     let duration = start_time.elapsed();

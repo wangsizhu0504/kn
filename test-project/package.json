@@ -2,8 +2,11 @@
   "name": "test-project",
   "version": "1.0.0",
   "devDependencies": {
+    "@types/jest": "^30.0.0",
     "@types/node": "^25.0.10",
     "eslint": "^9.39.2",
+    "jest": "^30.2.0",
+    "ts-jest": "^29.4.6",
     "typescript": "^5.9.3"
   },
   "description": "Test project for kn",
@@ -16,6 +19,7 @@
   "dependencies": {
     "axios": "^1.13.2",
     "dayjs": "^1.11.19",
-    "lodash": "^4.17.23"
+    "lodash": "^4.17.23",
+    "moment": "^2.30.1"
   }
 }
