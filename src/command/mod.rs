@@ -1,0 +1,17 @@
+pub mod cli;
+pub mod install;
+pub mod run;
+pub mod uninstall;
+pub mod execute;
+pub mod upgrade;
+pub mod clean_install;
+pub mod agent;
+pub mod list;
+pub mod info;
+pub mod watch;
+pub mod history;
+pub mod alias;
+pub mod stats;
+pub mod parallel;
+pub mod clean;
+pub mod analyze;

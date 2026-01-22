@@ -1,0 +1,34 @@
+[package]
+name = "kn"
+version = "0.1.0"
+readme = "README.md"
+edition = "2021"
+description = "Minimal, blazing fast Node.js package manager and scripts runner"
+authors = ["wangsizhu0504@outlook.com"]
+keywords = ["package-manager", "npm", "yarn", "pnpm", "scripts"]
+license = "MIT"
+homepage = "https://github.com/wangsizhu0504/kn"
+repository = "https://github.com/wangsizhu0504/kn"
+
+[[bin]]
+name = "kn"
+path = "src/main.rs"
+
+[dependencies]
+
+dirs = "5.0.1"
+rust-ini = "0.20.0"
+lazy_static = "1.4.0"
+parking_lot = "0.12.1"
+serde = { version = "1.0.193", features = ["derive", "default"] }
+serde_json = { version = "1.0.108", features = ["preserve_order"] }
+inquire = "0.6.2"
+indexmap = { version = "2.1.0", features = ["serde"] }
+
+[dev-dependencies]
+
+[target."cfg(unix)".dependencies]
+rustix = { version = "1.1.3", features = ["fs"] }
+
+[target."cfg(windows)".dependencies]
+winsafe = { version = "0.0.24", features = ["kernel"] }

@@ -1,0 +1,11 @@
+{
+  "name": "test-project",
+  "version": "1.0.0",
+  "description": "Test project for kn",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js",
+    "test": "echo 'Running tests...' && exit 0",
+    "build": "echo 'Building project...'"
+  }
+}
