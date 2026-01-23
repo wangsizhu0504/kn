@@ -75,22 +75,35 @@ pub fn run_script_fast(
         .unwrap_or_else(|| Path::new("."));
 
     if let Some(script_command) = scripts.get(script_name) {
-        let (shell, shell_arg) = if cfg!(target_os = "windows") {
-            ("cmd", "/C")
-        } else {
-            ("sh", "-c")
-        };
+        // Detect package manager to run the script
+        let pm = detect_package_manager_fast()?;
 
-        let mut cmd = Command::new(shell);
+        let mut cmd = Command::new(&pm);
 
-        cmd.arg(shell_arg)
-            .arg(script_command)
-            .env("npm_lifecycle_event", script_name)
+        // Different package managers have different run command formats
+        match pm.as_str() {
+            "npm" | "pnpm" | "yarn" | "bun" => {
+                cmd.arg("run").arg(script_name);
+            }
+            _ => {
+                cmd.arg("run").arg(script_name);
+            }
+        }
+
+        // Add additional arguments
+        if !args.is_empty() {
+            // For npm and pnpm, need to add -- before extra args
+            if pm == "npm" || pm == "pnpm" {
+                cmd.arg("--");
+            }
+            cmd.args(args);
+        }
+
+        cmd.env("npm_lifecycle_event", script_name)
             .env("npm_lifecycle_script", script_command)
             .env("npm_package_json", &package_json_path)
             .env("npm_execpath", std::env::current_exe()?)
             .current_dir(package_path)
-            .args(args)
             .status()?;
     } else {
         eprintln!("Script '{}' not found", script_name);
