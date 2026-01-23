@@ -25,4 +25,4 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 // Include tests at the end of main.rs to ensure they can access all modules
 #[cfg(test)]
-include!("test.rs");
+mod tests;
