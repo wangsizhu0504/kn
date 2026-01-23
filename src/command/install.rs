@@ -1,14 +1,22 @@
-use crate::parse::parse_ni;
-use crate::runner::{run_cli, get_cli_command_direct, DetectOptions};
 use crate::display::StyledOutput;
-use std::process::{Command, Stdio};
+use crate::parse::parse_ni;
+use crate::runner::{get_cli_command_direct, run_cli, DetectOptions};
 use std::io::{BufRead, BufReader, Write};
-use std::time::Instant;
-use std::thread;
-use std::sync::{Arc, atomic::{AtomicBool, Ordering}};
+use std::process::{Command, Stdio};
 use std::sync::mpsc;
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
+use std::thread;
+use std::time::Instant;
 
-pub fn handle(packages: Vec<String>, dev: bool, global: bool, exact: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle(
+    packages: Vec<String>,
+    dev: bool,
+    global: bool,
+    exact: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut args = packages.clone();
 
     // Handle flags
@@ -45,7 +53,7 @@ fn install_with_progress(
     args: &[String],
     packages: &[String],
     dev: bool,
-    global: bool
+    global: bool,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let start_time = Instant::now();
 
@@ -62,7 +70,11 @@ fn install_with_progress(
     };
 
     println!();
-    StyledOutput::info(&format!("Installing {} package(s) {}", packages.len(), install_type));
+    StyledOutput::info(&format!(
+        "Installing {} package(s) {}",
+        packages.len(),
+        install_type
+    ));
 
     for (i, pkg) in packages.iter().enumerate() {
         println!("  {}. {}", i + 1, pkg);
@@ -207,12 +219,16 @@ fn should_display_line(line: &str) -> bool {
     }
 
     // Show warnings and errors
-    if line_lower.contains("warn") || line_lower.contains("error") || line_lower.contains("deprecated") {
+    if line_lower.contains("warn")
+        || line_lower.contains("error")
+        || line_lower.contains("deprecated")
+    {
         return true;
     }
 
     // Show package additions
-    if line_lower.contains("added") || line_lower.contains("installed") || line_lower.contains("✓") {
+    if line_lower.contains("added") || line_lower.contains("installed") || line_lower.contains("✓")
+    {
         return true;
     }
 

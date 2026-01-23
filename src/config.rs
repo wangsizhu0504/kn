@@ -1,9 +1,4 @@
-use crate::{
-    agents::Agent,
-    detect::{detect},
-    agents::AGENT_MAP,
-    runner::DetectOptions,
-};
+use crate::{agents::Agent, agents::AGENT_MAP, detect::detect, runner::DetectOptions};
 use dirs::home_dir;
 use ini::Ini;
 use std::{
@@ -50,12 +45,20 @@ impl Config {
             let default_agent = section.get("default_agent");
             let global_agent = section.get("global_agent");
             if let Some(default_agent) = default_agent {
-                if let Some(agent) = AGENT_MAP.iter().find(|(name, _)| *name == default_agent).map(|(_, agent)| *agent) {
+                if let Some(agent) = AGENT_MAP
+                    .iter()
+                    .find(|(name, _)| *name == default_agent)
+                    .map(|(_, agent)| *agent)
+                {
                     config.default_agent = DefaultAgent::Agent(agent);
                 }
             }
             if let Some(global_agent) = global_agent {
-                if let Some(agent) = AGENT_MAP.iter().find(|(name, _)| *name == global_agent).map(|(_, agent)| *agent) {
+                if let Some(agent) = AGENT_MAP
+                    .iter()
+                    .find(|(name, _)| *name == global_agent)
+                    .map(|(_, agent)| *agent)
+                {
                     config.global_agent = agent;
                 }
             }

@@ -1,7 +1,7 @@
 use crate::detect::detect;
 use crate::runner::DetectOptions;
-use std::process::Command;
 use std::fs;
+use std::process::Command;
 
 pub fn handle(cache: bool, all: bool, global: bool) -> Result<(), Box<dyn std::error::Error>> {
     if all {
@@ -54,8 +54,11 @@ fn clean_local() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     if removed > 0 {
-        println!("\n\x1b[32m✓\x1b[0m Cleaned {} directories, freed ~{} MB\n",
-            removed, size_freed / 1024 / 1024);
+        println!(
+            "\n\x1b[32m✓\x1b[0m Cleaned {} directories, freed ~{} MB\n",
+            removed,
+            size_freed / 1024 / 1024
+        );
     } else {
         println!("\n\x1b[90mNothing to clean\x1b[0m\n");
     }
@@ -82,21 +85,11 @@ fn clean_cache() -> Result<(), Box<dyn std::error::Error>> {
     let agent_str = format!("{:?}", agent).to_lowercase();
 
     let result = match agent_str.as_str() {
-        "npm" | "npmbun" => {
-            Command::new("npm")
-                .args(&["cache", "clean", "--force"])
-                .status()
-        }
-        "yarn" | "yarnberry" => {
-            Command::new("yarn")
-                .args(&["cache", "clean"])
-                .status()
-        }
-        "pnpm" => {
-            Command::new("pnpm")
-                .args(&["store", "prune"])
-                .status()
-        }
+        "npm" | "npmbun" => Command::new("npm")
+            .args(&["cache", "clean", "--force"])
+            .status(),
+        "yarn" | "yarnberry" => Command::new("yarn").args(&["cache", "clean"]).status(),
+        "pnpm" => Command::new("pnpm").args(&["store", "prune"]).status(),
         "bun" => {
             // Bun doesn't have a cache clean command yet
             println!("  \x1b[90mBun cache cleaning not supported yet\x1b[0m");
@@ -110,7 +103,10 @@ fn clean_cache() -> Result<(), Box<dyn std::error::Error>> {
 
     match result {
         Ok(status) if status.success() => {
-            println!("\n\x1b[32m✓\x1b[0m {} cache cleaned successfully\n", agent_str);
+            println!(
+                "\n\x1b[32m✓\x1b[0m {} cache cleaned successfully\n",
+                agent_str
+            );
         }
         _ => {
             println!("\n\x1b[31m✗\x1b[0m Failed to clean {} cache\n", agent_str);
@@ -140,7 +136,9 @@ fn clean_global() -> Result<(), Box<dyn std::error::Error>> {
     let agent_str = format!("{:?}", agent).to_lowercase();
 
     let _ = match agent_str.as_str() {
-        "npm" | "npmbun" => Command::new("npm").args(&["list", "-g", "--depth=0"]).status(),
+        "npm" | "npmbun" => Command::new("npm")
+            .args(&["list", "-g", "--depth=0"])
+            .status(),
         "yarn" | "yarnberry" => Command::new("yarn").args(&["global", "list"]).status(),
         "pnpm" => Command::new("pnpm").args(&["list", "-g"]).status(),
         "bun" => Command::new("bun").args(&["pm", "ls", "-g"]).status(),

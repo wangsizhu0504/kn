@@ -1,14 +1,14 @@
 mod agents;
+mod cli_parser;
 mod command;
 mod command_utils;
 mod config;
 mod detect;
+mod display;
 mod parse;
 mod runner;
 mod storage;
 mod utils;
-mod display;
-mod cli_parser;
 
 use cli_parser::Cli;
 

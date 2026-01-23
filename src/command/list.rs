@@ -1,4 +1,4 @@
-use crate::command_utils::{parse_package_json};
+use crate::command_utils::parse_package_json;
 use crate::display::StyledOutput;
 use serde_json;
 use std::process;

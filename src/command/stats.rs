@@ -1,4 +1,4 @@
-use crate::storage::{load, STORAGE, ScriptStats};
+use crate::storage::{load, ScriptStats, STORAGE};
 
 pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     load();
@@ -17,7 +17,10 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
         let mut stats: Vec<_> = storage.script_stats.iter().collect();
         stats.sort_by(|a, b| b.1.total_runs.cmp(&a.1.total_runs));
 
-        println!("  \x1b[1m{:<20} {:>8} {:>12} {:>12}\x1b[0m", "Script", "Runs", "Avg Time", "Last Run");
+        println!(
+            "  \x1b[1m{:<20} {:>8} {:>12} {:>12}\x1b[0m",
+            "Script", "Runs", "Avg Time", "Last Run"
+        );
         println!("  {}", "─".repeat(60));
 
         for (name, stat) in stats.iter() {
@@ -63,7 +66,8 @@ pub fn record_execution(script_name: &str, duration_ms: u64) {
     if let Some(storage) = storage_guard.as_mut() {
         let now = chrono::Local::now().format("%Y-%m-%d").to_string();
 
-        storage.script_stats
+        storage
+            .script_stats
             .entry(script_name.to_string())
             .and_modify(|stat| {
                 stat.total_runs += 1;
@@ -93,7 +97,8 @@ pub fn get_all_stats() -> Vec<StatInfo> {
     let storage = STORAGE.lock();
 
     if let Some(storage) = storage.as_ref() {
-        storage.script_stats
+        storage
+            .script_stats
             .iter()
             .map(|(name, stat)| {
                 let avg_time = if stat.total_runs > 0 {
@@ -103,12 +108,13 @@ pub fn get_all_stats() -> Vec<StatInfo> {
                 };
 
                 // Parse last_run date string to timestamp
-                let last_run_timestamp = chrono::NaiveDate::parse_from_str(&stat.last_run, "%Y-%m-%d")
-                    .ok()
-                    .and_then(|date| {
-                        date.and_hms_opt(0, 0, 0)
-                            .map(|dt| dt.and_utc().timestamp() as u64)
-                    });
+                let last_run_timestamp =
+                    chrono::NaiveDate::parse_from_str(&stat.last_run, "%Y-%m-%d")
+                        .ok()
+                        .and_then(|date| {
+                            date.and_hms_opt(0, 0, 0)
+                                .map(|dt| dt.and_utc().timestamp() as u64)
+                        });
 
                 StatInfo {
                     script: name.clone(),

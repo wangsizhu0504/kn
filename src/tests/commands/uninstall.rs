@@ -14,7 +14,11 @@ fn test_parse_nun() {
     assert_eq!(args, vec!["remove", "react"]);
 
     // Test global uninstall
-    let (cmd, args) = parse_nun(Agent::Pnpm, vec!["-g".to_string(), "typescript".to_string()], None);
+    let (cmd, args) = parse_nun(
+        Agent::Pnpm,
+        vec!["-g".to_string(), "typescript".to_string()],
+        None,
+    );
     assert_eq!(cmd, "pnpm");
     assert!(args.contains(&"-g".to_string()));
     assert!(args.contains(&"typescript".to_string()));

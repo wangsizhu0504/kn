@@ -1,9 +1,9 @@
-use std::fs;
-use std::path::Path;
+use super::utils::{cleanup_test_dir, create_test_lock_file, create_test_package_json};
 use crate::agents::{Agent, AGENT_MAP};
 use crate::detect::detect;
 use crate::runner::DetectOptions;
-use super::utils::{cleanup_test_dir, create_test_package_json, create_test_lock_file};
+use std::fs;
+use std::path::Path;
 
 #[test]
 fn test_npm_detection() {
@@ -11,12 +11,15 @@ fn test_npm_detection() {
     cleanup_test_dir(test_dir);
     fs::create_dir_all(test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "npm-test",
 "version": "1.0.0"
 }
-"#, test_dir);
+"#,
+        test_dir,
+    );
 
     create_test_lock_file("package-lock.json", test_dir);
 
@@ -38,12 +41,15 @@ fn test_yarn_detection() {
     cleanup_test_dir(test_dir);
     fs::create_dir_all(test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "yarn-test",
 "version": "1.0.0"
 }
-"#, test_dir);
+"#,
+        test_dir,
+    );
 
     create_test_lock_file("yarn.lock", test_dir);
 
@@ -65,12 +71,15 @@ fn test_pnpm_detection() {
     cleanup_test_dir(test_dir);
     fs::create_dir_all(test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "pnpm-test",
 "version": "1.0.0"
 }
-"#, test_dir);
+"#,
+        test_dir,
+    );
 
     create_test_lock_file("pnpm-lock.yaml", test_dir);
 
@@ -92,12 +101,15 @@ fn test_bun_detection() {
     cleanup_test_dir(test_dir);
     fs::create_dir_all(test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "bun-test",
 "version": "1.0.0"
 }
-"#, test_dir);
+"#,
+        test_dir,
+    );
 
     create_test_lock_file("bun.lockb", test_dir);
 
@@ -120,13 +132,16 @@ fn test_package_manager_field_detection() {
     cleanup_test_dir(yarn_test_dir);
     fs::create_dir_all(yarn_test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "yarn-berry-test",
 "version": "1.0.0",
 "packageManager": "yarn@4.0.0"
 }
-"#, yarn_test_dir);
+"#,
+        yarn_test_dir,
+    );
 
     let options = DetectOptions {
         cwd: yarn_test_dir.to_path_buf(),
@@ -142,13 +157,16 @@ fn test_package_manager_field_detection() {
     cleanup_test_dir(pnpm_test_dir);
     fs::create_dir_all(pnpm_test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "pnpm6-test",
 "version": "1.0.0",
 "packageManager": "pnpm@6.0.0"
 }
-"#, pnpm_test_dir);
+"#,
+        pnpm_test_dir,
+    );
 
     let pnpm_options = DetectOptions {
         cwd: pnpm_test_dir.to_path_buf(),
@@ -180,12 +198,15 @@ fn test_fallback_to_npm() {
     cleanup_test_dir(test_dir);
     fs::create_dir_all(test_dir).expect("Failed to create test directory");
 
-    create_test_package_json(r#"
+    create_test_package_json(
+        r#"
 {
 "name": "fallback-test",
 "version": "1.0.0"
 }
-"#, test_dir);
+"#,
+        test_dir,
+    );
 
     let options = DetectOptions {
         cwd: test_dir.to_path_buf(),

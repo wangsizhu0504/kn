@@ -1,7 +1,7 @@
+use super::utils::{cleanup_test_dir, create_test_package_json};
+use crate::command_utils::parse_package_json;
 use std::fs;
 use std::path::Path;
-use crate::command_utils::parse_package_json;
-use super::utils::{cleanup_test_dir, create_test_package_json};
 
 #[test]
 fn test_package_parsing() {
@@ -39,7 +39,10 @@ fn test_package_parsing() {
     let scripts = package.scripts.expect("Scripts should be present");
     assert_eq!(scripts.get("start"), Some(&"node index.js".to_string()));
     assert_eq!(scripts.get("test"), Some(&"jest".to_string()));
-    assert_eq!(scripts.get("build"), Some(&"webpack --mode production".to_string()));
+    assert_eq!(
+        scripts.get("build"),
+        Some(&"webpack --mode production".to_string())
+    );
     assert_eq!(scripts.len(), 3);
 
     cleanup_test_dir(test_dir);

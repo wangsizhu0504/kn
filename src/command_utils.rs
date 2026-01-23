@@ -1,10 +1,10 @@
+use indexmap::IndexMap;
+use serde_json;
 use std::env;
 use std::fs;
 use std::io::Read;
-use std::path::{Path};
+use std::path::Path;
 use std::process::Command;
-use serde_json;
-use indexmap::IndexMap;
 
 #[derive(Debug, Clone, Default, serde::Deserialize)]
 pub struct Package {
@@ -21,15 +21,18 @@ pub fn parse_package_json(path: &str) -> Result<Package, Box<dyn std::error::Err
     let json: serde_json::Value = serde_json::from_str(&contents)?;
 
     let scripts = if let serde_json::Value::Object(scripts_map) = &json["scripts"] {
-        Some(scripts_map.iter()
-            .filter_map(|(k, v)| {
-                if let serde_json::Value::String(cmd) = v {
-                    Some((k.clone(), cmd.clone()))
-                } else {
-                    None
-                }
-            })
-            .collect::<IndexMap<String, String>>())
+        Some(
+            scripts_map
+                .iter()
+                .filter_map(|(k, v)| {
+                    if let serde_json::Value::String(cmd) = v {
+                        Some((k.clone(), cmd.clone()))
+                    } else {
+                        None
+                    }
+                })
+                .collect::<IndexMap<String, String>>(),
+        )
     } else {
         None
     };
@@ -41,7 +44,10 @@ pub fn parse_package_json(path: &str) -> Result<Package, Box<dyn std::error::Err
     })
 }
 
-pub fn run_script_fast(script_name: &str, args: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_script_fast(
+    script_name: &str,
+    args: &[String],
+) -> Result<(), Box<dyn std::error::Error>> {
     // Find package.json up to directory tree
     let mut current_dir = env::current_dir()?;
     let package_json_path = loop {
@@ -64,7 +70,9 @@ pub fn run_script_fast(script_name: &str, args: &[String]) -> Result<(), Box<dyn
         }
     };
 
-    let package_path = Path::new(&package_json_path).parent().unwrap_or_else(|| Path::new("."));
+    let package_path = Path::new(&package_json_path)
+        .parent()
+        .unwrap_or_else(|| Path::new("."));
 
     if let Some(script_command) = scripts.get(script_name) {
         let (shell, shell_arg) = if cfg!(target_os = "windows") {
@@ -75,7 +83,8 @@ pub fn run_script_fast(script_name: &str, args: &[String]) -> Result<(), Box<dyn
 
         let mut cmd = Command::new(shell);
 
-        cmd.arg(shell_arg).arg(script_command)
+        cmd.arg(shell_arg)
+            .arg(script_command)
             .env("npm_lifecycle_event", script_name)
             .env("npm_lifecycle_script", script_command)
             .env("npm_package_json", &package_json_path)

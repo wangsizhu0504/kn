@@ -17,8 +17,8 @@ fn test_cli_help_and_version() {
     // However, usually unit tests test library code. These tests spawn a process.
 
     if !std::path::Path::new(bin_path).exists() {
-         // If binary doesn't exist, we might skip or fail.
-         // Given this was in original test.rs, we assume environment is set up.
+        // If binary doesn't exist, we might skip or fail.
+        // Given this was in original test.rs, we assume environment is set up.
     }
 
     let help_output = Command::new(bin_path)
@@ -59,10 +59,14 @@ fn test_empty_args_handling() {
     let stderr_str = String::from_utf8_lossy(&output.stderr);
 
     // Check if help is shown in either stdout or stderr
-    let help_shown = output_str.contains("Usage:") ||
-                   output_str.contains("help") ||
-                   stderr_str.contains("Usage:") ||
-                   stderr_str.contains("help");
+    let help_shown = output_str.contains("Usage:")
+        || output_str.contains("help")
+        || stderr_str.contains("Usage:")
+        || stderr_str.contains("help");
 
-    assert!(help_shown, "Help should be shown when no arguments provided. stdout: {}, stderr: {}", output_str, stderr_str);
+    assert!(
+        help_shown,
+        "Help should be shown when no arguments provided. stdout: {}, stderr: {}",
+        output_str, stderr_str
+    );
 }

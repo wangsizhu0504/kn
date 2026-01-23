@@ -1,6 +1,8 @@
+use comfy_table::{
+    presets::UTF8_FULL, Attribute, Cell, Color as TableColor, ContentArrangement, Table,
+};
 use console::{style, Emoji, Term};
 use indicatif::{ProgressBar, ProgressStyle};
-use comfy_table::{Table, Cell, Color as TableColor, Attribute, ContentArrangement, presets::UTF8_FULL};
 
 // Emoji constants
 static PACKAGE: Emoji<'_, '_> = Emoji("📦  ", "[PKG] ");
@@ -108,40 +110,95 @@ impl StyledOutput {
 
     fn print_command_list() {
         let commands = vec![
-            ("install", "i, add", "Install packages (auto-detects package manager)", "\x1b[32m"),
+            (
+                "install",
+                "i, add",
+                "Install packages (auto-detects package manager)",
+                "\x1b[32m",
+            ),
             ("run", "r", "Run npm scripts from package.json", "\x1b[36m"),
             ("uninstall", "remove, rm", "Uninstall packages", "\x1b[31m"),
             ("execute", "exec, x", "Execute package binaries", "\x1b[33m"),
             ("upgrade", "update, up", "Upgrade dependencies", "\x1b[35m"),
-            ("clean-install", "ci", "Clean install dependencies (frozen lockfile)", "\x1b[34m"),
-            ("agent", "npm, yarn, pnpm, bun", "Run package manager directly", "\x1b[95m"),
+            (
+                "clean-install",
+                "ci",
+                "Clean install dependencies (frozen lockfile)",
+                "\x1b[34m",
+            ),
+            (
+                "agent",
+                "npm, yarn, pnpm, bun",
+                "Run package manager directly",
+                "\x1b[95m",
+            ),
             ("list", "ls", "Show available package scripts", "\x1b[96m"),
-            ("info", "env", "Show package manager and environment information", "\x1b[93m"),
-            ("watch", "w", "Watch files and re-run script on changes", "\x1b[35m"),
-            ("stats", "", "Show script performance statistics", "\x1b[93m"),
-            ("parallel", "p", "Run multiple scripts in parallel", "\x1b[95m"),
+            (
+                "info",
+                "env",
+                "Show package manager and environment information",
+                "\x1b[93m",
+            ),
+            (
+                "watch",
+                "w",
+                "Watch files and re-run script on changes",
+                "\x1b[35m",
+            ),
+            (
+                "stats",
+                "",
+                "Show script performance statistics",
+                "\x1b[93m",
+            ),
+            (
+                "parallel",
+                "p",
+                "Run multiple scripts in parallel",
+                "\x1b[95m",
+            ),
             ("clean", "", "Clean node_modules, cache, etc.", "\x1b[31m"),
             ("analyze", "", "Analyze project dependencies", "\x1b[96m"),
-            ("doctor", "", "Check project health and configuration", "\x1b[92m"),
+            (
+                "doctor",
+                "",
+                "Check project health and configuration",
+                "\x1b[92m",
+            ),
             ("size", "", "Analyze package sizes", "\x1b[94m"),
-            ("completion", "", "Generate shell completion scripts", "\x1b[90m"),
+            (
+                "completion",
+                "",
+                "Generate shell completion scripts",
+                "\x1b[90m",
+            ),
             ("help", "", "Show this help message", "\x1b[37m"),
         ];
 
         // 计算最大宽度以对齐
-        let max_main_cmd_width = commands.iter().map(|(main, _, _, _)| main.len()).max().unwrap_or(0);
-        let max_alias_width = commands.iter().map(|(_, alias, _, _)| alias.len()).max().unwrap_or(0);
+        let max_main_cmd_width = commands
+            .iter()
+            .map(|(main, _, _, _)| main.len())
+            .max()
+            .unwrap_or(0);
+        let max_alias_width = commands
+            .iter()
+            .map(|(_, alias, _, _)| alias.len())
+            .max()
+            .unwrap_or(0);
 
         for (main_cmd, aliases, desc, color) in commands {
             if aliases.is_empty() {
-                println!("  {}{:<width$}\x1b[0m  {}",
+                println!(
+                    "  {}{:<width$}\x1b[0m  {}",
                     color,
                     main_cmd,
                     desc,
                     width = max_main_cmd_width + max_alias_width + 4
                 );
             } else {
-                println!("  {}{:<main_width$}\x1b[0m \x1b[90m{:<alias_width$}\x1b[0m  {}",
+                println!(
+                    "  {}{:<main_width$}\x1b[0m \x1b[90m{:<alias_width$}\x1b[0m  {}",
                     color,
                     main_cmd,
                     aliases,
@@ -153,15 +210,16 @@ impl StyledOutput {
         }
     }
 
-
     pub fn enhanced_list_scripts(
         package_name: &str,
         package_version: &str,
         scripts: &indexmap::IndexMap<String, String>,
     ) {
-
         println!("╭─────────────────────────────────────────────────────────────────────╮");
-        println!("│  📦  \x1b[1m{}\x1b[0m \x1b[90mv{}\x1b[0m", package_name, package_version);
+        println!(
+            "│  📦  \x1b[1m{}\x1b[0m \x1b[90mv{}\x1b[0m",
+            package_name, package_version
+        );
         println!("├─────────────────────────────────────────────────────────────────────┤");
 
         if scripts.is_empty() {
@@ -170,21 +228,19 @@ impl StyledOutput {
             println!("│  📋  \x1b[1mAvailable Scripts\x1b[0m");
             println!("├─────────────────────────────────────────────────────────────────────┤");
 
-            let list: Vec<(String, String)> = scripts.iter()
+            let list: Vec<(String, String)> = scripts
+                .iter()
                 .map(|(k, v)| (k.clone(), v.clone()))
                 .collect();
 
-            let max_name_width = list.iter()
-                .map(|(n, _)| n.len())
-                .max()
-                .unwrap_or(0)
-                .max(12);
+            let max_name_width = list.iter().map(|(n, _)| n.len()).max().unwrap_or(0).max(12);
 
             for (i, (name, cmd)) in list.iter().enumerate() {
                 let is_last = i == list.len() - 1;
                 let prefix = if is_last { "└─" } else { "├─" };
 
-                println!("│  {} \x1b[36m{:<width$}\x1b[0m  \x1b[90m{}\x1b[0m",
+                println!(
+                    "│  {} \x1b[36m{:<width$}\x1b[0m  \x1b[90m{}\x1b[0m",
                     prefix,
                     name,
                     cmd,
@@ -227,21 +283,27 @@ impl StyledOutput {
 
         if good > 0 {
             table.add_row(vec![
-                Cell::new("✓ Passed").fg(TableColor::Green).add_attribute(Attribute::Bold),
+                Cell::new("✓ Passed")
+                    .fg(TableColor::Green)
+                    .add_attribute(Attribute::Bold),
                 Cell::new(good.to_string()).fg(TableColor::Green),
             ]);
         }
 
         if warnings > 0 {
             table.add_row(vec![
-                Cell::new("⚠ Warnings").fg(TableColor::Yellow).add_attribute(Attribute::Bold),
+                Cell::new("⚠ Warnings")
+                    .fg(TableColor::Yellow)
+                    .add_attribute(Attribute::Bold),
                 Cell::new(warnings.to_string()).fg(TableColor::Yellow),
             ]);
         }
 
         if errors > 0 {
             table.add_row(vec![
-                Cell::new("✗ Errors").fg(TableColor::Red).add_attribute(Attribute::Bold),
+                Cell::new("✗ Errors")
+                    .fg(TableColor::Red)
+                    .add_attribute(Attribute::Bold),
                 Cell::new(errors.to_string()).fg(TableColor::Red),
             ]);
         }
@@ -263,5 +325,4 @@ impl StyledOutput {
     pub fn command_example(command: &str, description: &str) {
         println!("  - {} {}", command, description);
     }
-
 }

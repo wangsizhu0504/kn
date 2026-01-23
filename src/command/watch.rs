@@ -1,12 +1,19 @@
 use crate::command_utils::run_script_fast;
 use crate::display::StyledOutput;
-use std::time::{Duration, SystemTime};
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
+use std::time::{Duration, SystemTime};
 
-pub fn handle(script_name: String, patterns: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle(
+    script_name: String,
+    patterns: Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let watch_patterns = if patterns.is_empty() {
-        vec!["src/**/*".to_string(), "*.js".to_string(), "*.ts".to_string()]
+        vec![
+            "src/**/*".to_string(),
+            "*.js".to_string(),
+            "*.ts".to_string(),
+        ]
     } else {
         patterns
     };
@@ -19,7 +26,10 @@ pub fn handle(script_name: String, patterns: Vec<String>) -> Result<(), Box<dyn 
         println!("  \x1b[90m•\x1b[0m {}", pattern);
     }
     println!("");
-    println!("\x1b[32m▶\x1b[0m Running script: \x1b[36m{}\x1b[0m", script_name);
+    println!(
+        "\x1b[32m▶\x1b[0m Running script: \x1b[36m{}\x1b[0m",
+        script_name
+    );
     println!("{}", "\x1b[90m─\x1b[0m".repeat(70));
     println!("");
 
@@ -69,7 +79,10 @@ pub fn handle(script_name: String, patterns: Vec<String>) -> Result<(), Box<dyn 
 
         if changed {
             println!("");
-            println!("\x1b[32m▶\x1b[0m Re-running script: \x1b[36m{}\x1b[0m", script_name);
+            println!(
+                "\x1b[32m▶\x1b[0m Re-running script: \x1b[36m{}\x1b[0m",
+                script_name
+            );
             println!("{}", "\x1b[90m─\x1b[0m".repeat(70));
             println!("");
 

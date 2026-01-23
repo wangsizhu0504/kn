@@ -2,7 +2,6 @@ use std::{fs::File, io::Read, path::Path};
 
 use crate::command_utils::Package;
 
-
 #[allow(dead_code)]
 pub fn get_package_json(path: &str) -> Package {
     let path = Path::new(path);

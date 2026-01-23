@@ -47,7 +47,8 @@ pub fn handle(shell: Option<String>) -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn print_bash_completion() {
-    println!(r#"
+    println!(
+        r#"
 _kn_completion() {{
     local cur prev commands
     COMPREPLY=()
@@ -83,11 +84,13 @@ _kn_completion() {{
 }}
 
 complete -F _kn_completion kn
-"#);
+"#
+    );
 }
 
 fn print_zsh_completion() {
-    println!(r#"
+    println!(
+        r#"
 #compdef kn
 
 _kn() {{
@@ -140,11 +143,13 @@ _kn() {{
 }}
 
 _kn "$@"
-"#);
+"#
+    );
 }
 
 fn print_fish_completion() {
-    println!(r#"
+    println!(
+        r#"
 # kn completion for fish shell
 
 # Main commands
@@ -183,5 +188,6 @@ complete -c kn -f -n "__fish_seen_subcommand_from run r" -a "(test -f package.js
 
 # Install/uninstall: complete with installed packages
 complete -c kn -f -n "__fish_seen_subcommand_from install i uninstall" -a "(test -d node_modules; and ls node_modules 2>/dev/null | grep -v '^\.')"
-"#);
+"#
+    );
 }

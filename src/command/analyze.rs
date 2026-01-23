@@ -1,7 +1,7 @@
 use crate::command_utils::parse_package_json;
 use crate::display::StyledOutput;
-use std::process::Command;
 use std::collections::HashMap;
+use std::process::Command;
 
 pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     println!("\n\x1b[1m📊 Analyzing project dependencies...\x1b[0m\n");
@@ -25,12 +25,14 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     let json_str = std::fs::read_to_string(&package_json_path)?;
     let json: serde_json::Value = serde_json::from_str(&json_str)?;
 
-    let deps_count = json.get("dependencies")
+    let deps_count = json
+        .get("dependencies")
         .and_then(|v| v.as_object())
         .map(|o| o.len())
         .unwrap_or(0);
 
-    let dev_deps_count = json.get("devDependencies")
+    let dev_deps_count = json
+        .get("devDependencies")
         .and_then(|v| v.as_object())
         .map(|o| o.len())
         .unwrap_or(0);
@@ -50,7 +52,13 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
 
             if let Ok(size) = get_dir_size("node_modules") {
                 let size_mb = size / 1024 / 1024;
-                let color = if size_mb > 500 { "\x1b[31m" } else if size_mb > 200 { "\x1b[33m" } else { "\x1b[32m" };
+                let color = if size_mb > 500 {
+                    "\x1b[31m"
+                } else if size_mb > 200 {
+                    "\x1b[33m"
+                } else {
+                    "\x1b[32m"
+                };
                 println!("  └─ node_modules: {}{} MB\x1b[0m", color, size_mb);
             }
             println!();
@@ -91,18 +99,21 @@ fn get_dir_size(path: &str) -> Result<u64, std::io::Error> {
 }
 
 fn check_outdated() -> Result<(), Box<dyn std::error::Error>> {
-    let output = Command::new("npm")
-        .args(&["outdated", "--json"])
-        .output();
+    let output = Command::new("npm").args(&["outdated", "--json"]).output();
 
     match output {
         Ok(output) if output.status.success() || !output.stdout.is_empty() => {
             if let Ok(json_str) = String::from_utf8(output.stdout) {
-                if let Ok(outdated) = serde_json::from_str::<HashMap<String, serde_json::Value>>(&json_str) {
+                if let Ok(outdated) =
+                    serde_json::from_str::<HashMap<String, serde_json::Value>>(&json_str)
+                {
                     if outdated.is_empty() {
                         println!("  └─ \x1b[32m✓ All packages are up to date\x1b[0m");
                     } else {
-                        println!("  └─ \x1b[33m{} packages need updates\x1b[0m", outdated.len());
+                        println!(
+                            "  └─ \x1b[33m{} packages need updates\x1b[0m",
+                            outdated.len()
+                        );
                         println!("     \x1b[90mRun 'kn upgrade' to update them\x1b[0m");
                     }
                     return Ok(());
@@ -120,9 +131,7 @@ fn analyze_duplicates() -> Result<(), Box<dyn std::error::Error>> {
     println!();
     println!("  \x1b[1mDuplicate Packages\x1b[0m");
 
-    let output = Command::new("npm")
-        .args(&["dedupe", "--dry-run"])
-        .output();
+    let output = Command::new("npm").args(&["dedupe", "--dry-run"]).output();
 
     match output {
         Ok(output) if output.status.success() => {

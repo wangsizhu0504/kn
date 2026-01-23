@@ -9,7 +9,11 @@ fn test_parse_ni() {
     assert_eq!(args, vec!["install", "lodash"]);
 
     // Test global install
-    let (cmd, args) = parse_ni(Agent::Npm, vec!["-g".to_string(), "typescript".to_string()], None);
+    let (cmd, args) = parse_ni(
+        Agent::Npm,
+        vec!["-g".to_string(), "typescript".to_string()],
+        None,
+    );
     assert_eq!(cmd, "npm");
     assert!(args.contains(&"-g".to_string()));
     assert!(args.contains(&"typescript".to_string()));

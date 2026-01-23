@@ -1,9 +1,13 @@
-use crate::command_utils::{run_script_fast, parse_package_json};
-use crate::display::StyledOutput;
 use crate::command::stats;
+use crate::command_utils::{parse_package_json, run_script_fast};
+use crate::display::StyledOutput;
 use inquire::Select;
 
-pub fn handle(script_name: Option<String>, args: Vec<String>, _if_present: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle(
+    script_name: Option<String>,
+    args: Vec<String>,
+    _if_present: bool,
+) -> Result<(), Box<dyn std::error::Error>> {
     match script_name {
         Some(script) => {
             // Try fuzzy match if script not found
@@ -12,10 +16,13 @@ pub fn handle(script_name: Option<String>, args: Vec<String>, _if_present: bool)
             } else {
                 match fuzzy_find_script(&script)? {
                     Some(found) => {
-                        println!("\x1b[90mDid you mean '\x1b[36m{}\x1b[90m'? Running it...\x1b[0m\n", found);
+                        println!(
+                            "\x1b[90mDid you mean '\x1b[36m{}\x1b[90m'? Running it...\x1b[0m\n",
+                            found
+                        );
                         found
                     }
-                    None => script
+                    None => script,
                 }
             };
 
@@ -27,7 +34,10 @@ pub fn handle(script_name: Option<String>, args: Vec<String>, _if_present: bool)
             // Record stats
             if result.is_ok() {
                 stats::record_execution(&final_script, duration.as_millis() as u64);
-                println!("\n\x1b[90m✓ Completed in {:.2}s\x1b[0m", duration.as_secs_f64());
+                println!(
+                    "\n\x1b[90m✓ Completed in {:.2}s\x1b[0m",
+                    duration.as_secs_f64()
+                );
             }
 
             result?;
@@ -103,10 +113,7 @@ fn levenshtein_distance(s1: &str, s2: &str) -> usize {
         for (j, c2) in s2.chars().enumerate() {
             let cost = if c1 == c2 { 0 } else { 1 };
             matrix[i + 1][j + 1] = std::cmp::min(
-                std::cmp::min(
-                    matrix[i][j + 1] + 1,
-                    matrix[i + 1][j] + 1,
-                ),
+                std::cmp::min(matrix[i][j + 1] + 1, matrix[i + 1][j] + 1),
                 matrix[i][j] + cost,
             );
         }
@@ -170,9 +177,10 @@ fn show_available_scripts() -> Result<(), Box<dyn std::error::Error>> {
     match Select::new("Select a script to run:", options).prompt() {
         Ok(selection) => {
             // Extract script name from selection
-            if let Some(item) = script_items.iter().find(|item| {
-                selection.starts_with(&format!("{} ", item.name))
-            }) {
+            if let Some(item) = script_items
+                .iter()
+                .find(|item| selection.starts_with(&format!("{} ", item.name)))
+            {
                 // Measure execution time
                 let start = std::time::Instant::now();
                 println!();
@@ -182,7 +190,10 @@ fn show_available_scripts() -> Result<(), Box<dyn std::error::Error>> {
                 // Record stats
                 if result.is_ok() {
                     stats::record_execution(&item.name, duration.as_millis() as u64);
-                    println!("\n\x1b[90m✓ Completed in {:.2}s\x1b[0m", duration.as_secs_f64());
+                    println!(
+                        "\n\x1b[90m✓ Completed in {:.2}s\x1b[0m",
+                        duration.as_secs_f64()
+                    );
                 }
 
                 result?;

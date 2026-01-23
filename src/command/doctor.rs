@@ -1,9 +1,9 @@
-use crate::display::StyledOutput;
 use crate::command_utils::detect_package_manager_fast;
-use std::process::Command;
-use std::path::Path;
-use std::fs;
+use crate::display::StyledOutput;
 use serde_json::Value;
+use std::fs;
+use std::path::Path;
+use std::process::Command;
 
 pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     StyledOutput::header("Project Health Check");
@@ -57,10 +57,16 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
         StyledOutput::success("✨ Excellent! Your project is in great shape!");
     } else if errors > 0 {
         println!();
-        StyledOutput::error(&format!("Found {} critical issue(s) that need attention", errors));
+        StyledOutput::error(&format!(
+            "Found {} critical issue(s) that need attention",
+            errors
+        ));
     } else {
         println!();
-        StyledOutput::warning(&format!("Found {} warning(s) - consider addressing these", warnings));
+        StyledOutput::warning(&format!(
+            "Found {} warning(s) - consider addressing these",
+            warnings
+        ));
     }
     println!();
 
@@ -100,17 +106,25 @@ fn check_package_json() -> Result<(usize, usize, usize), Box<dyn std::error::Err
                     }
 
                     // Check for dependencies
-                    let dep_count = json.get("dependencies")
+                    let dep_count = json
+                        .get("dependencies")
                         .and_then(|d| d.as_object())
                         .map(|d| d.len())
                         .unwrap_or(0);
-                    let dev_dep_count = json.get("devDependencies")
+                    let dev_dep_count = json
+                        .get("devDependencies")
                         .and_then(|d| d.as_object())
                         .map(|d| d.len())
                         .unwrap_or(0);
 
                     if dep_count > 0 || dev_dep_count > 0 {
-                        StyledOutput::check_item(true, &format!("{} dependencies, {} devDependencies", dep_count, dev_dep_count));
+                        StyledOutput::check_item(
+                            true,
+                            &format!(
+                                "{} dependencies, {} devDependencies",
+                                dep_count, dev_dep_count
+                            ),
+                        );
                         passed += 1;
                     } else {
                         StyledOutput::detail_item("ℹ", "No dependencies defined");
@@ -118,7 +132,10 @@ fn check_package_json() -> Result<(usize, usize, usize), Box<dyn std::error::Err
 
                     // Check for scripts
                     if let Some(scripts) = json.get("scripts").and_then(|s| s.as_object()) {
-                        StyledOutput::check_item(true, &format!("{} scripts defined", scripts.len()));
+                        StyledOutput::check_item(
+                            true,
+                            &format!("{} scripts defined", scripts.len()),
+                        );
                         passed += 1;
                     }
 
@@ -196,7 +213,8 @@ fn check_security() -> Result<(usize, usize, usize), Box<dyn std::error::Error>>
         Ok(output) => {
             if let Ok(result) = String::from_utf8(output.stdout) {
                 if let Ok(json) = serde_json::from_str::<Value>(&result) {
-                    let vulnerabilities = json.get("metadata")
+                    let vulnerabilities = json
+                        .get("metadata")
                         .and_then(|m| m.get("vulnerabilities"))
                         .and_then(|v| v.as_object());
 
@@ -216,18 +234,30 @@ fn check_security() -> Result<(usize, usize, usize), Box<dyn std::error::Error>>
                             let mut warnings = 0;
 
                             if critical > 0 {
-                                StyledOutput::check_item(false, &format!("{} critical vulnerabilities", critical));
+                                StyledOutput::check_item(
+                                    false,
+                                    &format!("{} critical vulnerabilities", critical),
+                                );
                                 errors += 1;
                             }
                             if high > 0 {
-                                StyledOutput::check_item(false, &format!("{} high vulnerabilities", high));
+                                StyledOutput::check_item(
+                                    false,
+                                    &format!("{} high vulnerabilities", high),
+                                );
                                 warnings += 1;
                             }
                             if moderate > 0 || low > 0 {
-                                StyledOutput::detail_item("⚠", &format!("{} moderate, {} low", moderate, low));
+                                StyledOutput::detail_item(
+                                    "⚠",
+                                    &format!("{} moderate, {} low", moderate, low),
+                                );
                             }
 
-                            StyledOutput::detail_item("💡", &format!("Run '{} audit fix' to fix automatically", manager));
+                            StyledOutput::detail_item(
+                                "💡",
+                                &format!("Run '{} audit fix' to fix automatically", manager),
+                            );
                             return Ok((0, warnings, errors));
                         }
                     }
@@ -288,7 +318,10 @@ fn check_lock_files() -> Result<(usize, usize, usize), Box<dyn std::error::Error
 
     if found.is_empty() {
         StyledOutput::check_item(false, "No lock file found");
-        StyledOutput::detail_item("💡", "Lock files ensure consistent installs across environments");
+        StyledOutput::detail_item(
+            "💡",
+            "Lock files ensure consistent installs across environments",
+        );
         return Ok((0, 1, 0));
     }
 
@@ -316,39 +349,47 @@ fn check_duplicates() -> Result<(usize, usize, usize), Box<dyn std::error::Error
     match fs::read_to_string("package.json") {
         Ok(content) => {
             if let Ok(json) = serde_json::from_str::<Value>(&content) {
-                let deps = json.get("dependencies")
+                let deps = json
+                    .get("dependencies")
                     .and_then(|d| d.as_object())
                     .map(|d| d.keys().cloned().collect::<Vec<_>>())
                     .unwrap_or_default();
 
-                let dev_deps = json.get("devDependencies")
+                let dev_deps = json
+                    .get("devDependencies")
                     .and_then(|d| d.as_object())
                     .map(|d| d.keys().cloned().collect::<Vec<_>>())
                     .unwrap_or_default();
 
-                let duplicates: Vec<_> = deps
-                    .iter()
-                    .filter(|d| dev_deps.contains(d))
-                    .collect();
+                let duplicates: Vec<_> = deps.iter().filter(|d| dev_deps.contains(d)).collect();
 
                 if duplicates.is_empty() {
                     StyledOutput::check_item(true, "No duplicate dependencies");
                     Ok((1, 0, 0))
                 } else {
-                    StyledOutput::check_item(false, &format!("{} duplicate(s) in both deps & devDeps", duplicates.len()));
+                    StyledOutput::check_item(
+                        false,
+                        &format!("{} duplicate(s) in both deps & devDeps", duplicates.len()),
+                    );
                     for dup in duplicates.iter().take(3) {
                         StyledOutput::detail_item("•", dup);
                     }
                     if duplicates.len() > 3 {
-                        StyledOutput::detail_item("•", &format!("... and {} more", duplicates.len() - 3));
+                        StyledOutput::detail_item(
+                            "•",
+                            &format!("... and {} more", duplicates.len() - 3),
+                        );
                     }
-                    StyledOutput::detail_item("💡", "Move to either dependencies or devDependencies");
+                    StyledOutput::detail_item(
+                        "💡",
+                        "Move to either dependencies or devDependencies",
+                    );
                     Ok((0, 1, 0))
                 }
             } else {
                 Ok((0, 0, 0))
             }
         }
-        Err(_) => Ok((0, 0, 0))
+        Err(_) => Ok((0, 0, 0)),
     }
 }

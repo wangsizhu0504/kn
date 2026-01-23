@@ -5,9 +5,9 @@ use std::process::{self, Command, Stdio};
 use std::{env, io};
 
 use crate::agents::Agent;
-use crate::config::{get_default_agent, get_global_agent, DefaultAgent};
-use crate::detect::{detect};
 use crate::agents::AGENT_MAP;
+use crate::config::{get_default_agent, get_global_agent, DefaultAgent};
+use crate::detect::detect;
 use crate::display::StyledOutput;
 
 #[derive(Clone)]
@@ -53,14 +53,22 @@ pub struct RunnerContextClone {
 pub type Runner =
     fn(agent: Agent, args: Vec<String>, ctx: Option<RunnerContext>) -> (String, Vec<String>);
 
-pub fn run_cli(func: Runner, options: Option<DetectOptions>, args: Vec<String>) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run_cli(
+    func: Runner,
+    options: Option<DetectOptions>,
+    args: Vec<String>,
+) -> Result<(), Box<dyn std::error::Error>> {
     let mut options = options.unwrap_or_default();
 
     run(func, args, &mut options)?;
     Ok(())
 }
 
-pub fn run(func: Runner, args: Vec<String>, options: &mut DetectOptions) -> Result<(), Box<dyn std::error::Error>> {
+pub fn run(
+    func: Runner,
+    args: Vec<String>,
+    options: &mut DetectOptions,
+) -> Result<(), Box<dyn std::error::Error>> {
     let version = env!("CARGO_PKG_VERSION");
 
     let mut args = args;
@@ -127,11 +135,7 @@ pub fn get_cli_command_direct(
     get_cli_command(func, args, options)
 }
 
-fn get_cli_command(
-    func: Runner,
-    args: Vec<String>,
-    options: DetectOptions,
-) -> CommandResult {
+fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> CommandResult {
     let global = "-g".to_string();
     if args.contains(&global) {
         return Ok(Some(func(get_global_agent(), args, None)));
@@ -143,10 +147,18 @@ fn get_cli_command(
     };
 
     if agent == DefaultAgent::Prompt {
-        let items: Vec<&str> = AGENT_MAP.iter().filter(|(name, _)| !name.contains("@")).map(|(name, _)| *name).collect();
+        let items: Vec<&str> = AGENT_MAP
+            .iter()
+            .filter(|(name, _)| !name.contains("@"))
+            .map(|(name, _)| *name)
+            .collect();
         let selection = Select::new("script to run:", items).prompt();
         if let Ok(selection) = selection {
-            if let Some(agent_value) = AGENT_MAP.iter().find(|(name, _)| *name == selection).map(|(_, agent)| *agent) {
+            if let Some(agent_value) = AGENT_MAP
+                .iter()
+                .find(|(name, _)| *name == selection)
+                .map(|(_, agent)| *agent)
+            {
                 agent = DefaultAgent::Agent(agent_value);
             } else {
                 return Ok(None);

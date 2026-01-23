@@ -19,10 +19,10 @@ fn levenshtein_distance(s1: &str, s2: &str) -> usize {
             let cost = if c1 == c2 { 0 } else { 1 };
             matrix[i + 1][j + 1] = std::cmp::min(
                 std::cmp::min(
-                    matrix[i][j + 1] + 1,      // deletion
-                    matrix[i + 1][j] + 1,      // insertion
+                    matrix[i][j + 1] + 1, // deletion
+                    matrix[i + 1][j] + 1, // insertion
                 ),
-                matrix[i][j] + cost,           // substitution
+                matrix[i][j] + cost, // substitution
             );
         }
     }
@@ -33,18 +33,36 @@ fn levenshtein_distance(s1: &str, s2: &str) -> usize {
 // Find similar commands based on user input
 fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
     let all_commands = vec![
-        "install", "i", "add",
-        "run", "r",
-        "uninstall", "remove", "rm",
-        "execute", "exec", "x",
-        "upgrade", "update", "up",
-        "clean-install", "ci",
-        "agent", "npm", "yarn", "pnpm", "bun",
-        "list", "ls",
-        "info", "env",
-        "watch", "w",
+        "install",
+        "i",
+        "add",
+        "run",
+        "r",
+        "uninstall",
+        "remove",
+        "rm",
+        "execute",
+        "exec",
+        "x",
+        "upgrade",
+        "update",
+        "up",
+        "clean-install",
+        "ci",
+        "agent",
+        "npm",
+        "yarn",
+        "pnpm",
+        "bun",
+        "list",
+        "ls",
+        "info",
+        "env",
+        "watch",
+        "w",
         "stats",
-        "parallel", "p",
+        "parallel",
+        "p",
         "clean",
         "analyze",
         "doctor",
@@ -73,7 +91,10 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
 fn format_unknown_command_error(input: &str) -> String {
     let similar = find_similar_commands(input);
 
-    let mut error_msg = format!("\x1b[31m✗ Error:\x1b[0m Unknown command: \x1b[33m{}\x1b[0m\n", input);
+    let mut error_msg = format!(
+        "\x1b[31m✗ Error:\x1b[0m Unknown command: \x1b[33m{}\x1b[0m\n",
+        input
+    );
 
     if !similar.is_empty() {
         error_msg.push_str("\n\x1b[36m💡 Did you mean:\x1b[0m\n");
@@ -82,7 +103,8 @@ fn format_unknown_command_error(input: &str) -> String {
         }
     }
 
-    error_msg.push_str("\n\x1b[90mRun \x1b[36mkn help\x1b[90m to see all available commands.\x1b[0m\n");
+    error_msg
+        .push_str("\n\x1b[90mRun \x1b[36mkn help\x1b[90m to see all available commands.\x1b[0m\n");
 
     error_msg
 }
@@ -94,7 +116,10 @@ fn format_error(message: &str) -> String {
 
 // Format error with suggestion
 fn format_error_with_suggestion(message: &str, suggestion: &str) -> String {
-    format!("\x1b[31m✗ Error:\x1b[0m {}\n\x1b[36m💡 Suggestion:\x1b[0m {}", message, suggestion)
+    format!(
+        "\x1b[31m✗ Error:\x1b[0m {}\n\x1b[36m💡 Suggestion:\x1b[0m {}",
+        message, suggestion
+    )
 }
 
 #[derive(Debug)]
@@ -184,7 +209,7 @@ impl Cli {
             if args.len() <= i + 1 {
                 return Err(format_error_with_suggestion(
                     "Expected directory after -C flag",
-                    "Usage: kn -C <directory> <command>"
+                    "Usage: kn -C <directory> <command>",
                 ));
             }
             cwd = Some(args[i + 1].clone());
@@ -282,7 +307,7 @@ fn parse_install_command(args: &[String], i: &mut usize) -> Result<Commands, Str
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for install: {}", arg),
-                    "Valid flags: -D (--save-dev), -g (--global), -E (--save-exact)"
+                    "Valid flags: -D (--save-dev), -g (--global), -E (--save-exact)",
                 ));
             }
             _ => packages.push(args[*i].clone()),
@@ -310,7 +335,7 @@ fn parse_run_command(args: &[String], i: &mut usize) -> Result<Commands, String>
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for run: {}", arg),
-                    "Valid flag: --if-present"
+                    "Valid flag: --if-present",
                 ));
             }
             _ => {
@@ -341,7 +366,7 @@ fn parse_uninstall_command(args: &[String], i: &mut usize) -> Result<Commands, S
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for uninstall: {}", arg),
-                    "Valid flag: -g (--global)"
+                    "Valid flag: -g (--global)",
                 ));
             }
             _ => packages.push(args[*i].clone()),
@@ -352,7 +377,7 @@ fn parse_uninstall_command(args: &[String], i: &mut usize) -> Result<Commands, S
     if packages.is_empty() {
         return Err(format_error_with_suggestion(
             "Uninstall command requires at least one package name",
-            "Usage: kn uninstall <package> [options]"
+            "Usage: kn uninstall <package> [options]",
         ));
     }
 
@@ -363,7 +388,7 @@ fn parse_execute_command(args: &[String], i: &mut usize) -> Result<Commands, Str
     if *i >= args.len() {
         return Err(format_error_with_suggestion(
             "Execute command requires a command to execute",
-            "Usage: kn execute <command> [args...]"
+            "Usage: kn execute <command> [args...]",
         ));
     }
 
@@ -394,7 +419,7 @@ fn parse_upgrade_command(args: &[String], i: &mut usize) -> Result<Commands, Str
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for upgrade: {}", arg),
-                    "Valid flags: -i (--interactive), --latest"
+                    "Valid flags: -i (--interactive), --latest",
                 ));
             }
             _ => packages.push(args[*i].clone()),
@@ -420,10 +445,15 @@ fn parse_clean_install_command(args: &[String], i: &mut usize) -> Result<Command
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for clean-install: {}", arg),
-                    "Valid flags: --force, --no-optional"
+                    "Valid flags: --force, --no-optional",
                 ));
             }
-            _ => return Err(format_error(&format!("Unexpected argument for clean-install: {}", args[*i]))),
+            _ => {
+                return Err(format_error(&format!(
+                    "Unexpected argument for clean-install: {}",
+                    args[*i]
+                )))
+            }
         }
         *i += 1;
     }
@@ -431,7 +461,11 @@ fn parse_clean_install_command(args: &[String], i: &mut usize) -> Result<Command
     Ok(Commands::CleanInstall { force, no_optional })
 }
 
-fn parse_agent_command(args: &[String], i: &mut usize, agent_name: &str) -> Result<Commands, String> {
+fn parse_agent_command(
+    args: &[String],
+    i: &mut usize,
+    agent_name: &str,
+) -> Result<Commands, String> {
     let manager = match agent_name {
         "npm" | "yarn" | "pnpm" | "bun" => Some(agent_name.to_string()),
         _ => None,
@@ -446,7 +480,7 @@ fn parse_agent_command(args: &[String], i: &mut usize, agent_name: &str) -> Resu
     if agent_args.is_empty() {
         return Err(format_error_with_suggestion(
             "Agent command requires arguments",
-            "Usage: kn agent [npm|yarn|pnpm|bun] <args...>"
+            "Usage: kn agent [npm|yarn|pnpm|bun] <args...>",
         ));
     }
 
@@ -465,10 +499,15 @@ fn parse_list_command(args: &[String], i: &mut usize) -> Result<Commands, String
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for list: {}", arg),
-                    "Valid flag: --json"
+                    "Valid flag: --json",
                 ));
             }
-            _ => return Err(format_error(&format!("Unexpected argument for list: {}", args[*i]))),
+            _ => {
+                return Err(format_error(&format!(
+                    "Unexpected argument for list: {}",
+                    args[*i]
+                )))
+            }
         }
         *i += 1;
     }
@@ -485,10 +524,15 @@ fn parse_info_command(args: &[String], i: &mut usize) -> Result<Commands, String
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for info: {}", arg),
-                    "Valid flag: -v (--verbose)"
+                    "Valid flag: -v (--verbose)",
                 ));
             }
-            _ => return Err(format_error(&format!("Unexpected argument for info: {}", args[*i]))),
+            _ => {
+                return Err(format_error(&format!(
+                    "Unexpected argument for info: {}",
+                    args[*i]
+                )))
+            }
         }
         *i += 1;
     }
@@ -500,7 +544,7 @@ fn parse_watch_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     if *i >= args.len() {
         return Err(format_error_with_suggestion(
             "Watch command requires a script name",
-            "Usage: kn watch <script-name> [patterns...]"
+            "Usage: kn watch <script-name> [patterns...]",
         ));
     }
 
@@ -543,7 +587,12 @@ fn parse_clean_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
             arg if arg.starts_with('-') => {
                 return Err(format_error(&format!("Unknown flag for clean: {}", arg)));
             }
-            _ => return Err(format_error(&format!("Unexpected argument for clean: {}", args[*i]))),
+            _ => {
+                return Err(format_error(&format!(
+                    "Unexpected argument for clean: {}",
+                    args[*i]
+                )))
+            }
         }
         *i += 1;
     }

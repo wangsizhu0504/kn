@@ -10,7 +10,6 @@ pub enum Agent {
     Pnpm6,
 }
 
-
 pub const AGENT_MAP: &[(&str, Agent)] = &[
     ("npm", Agent::Npm),
     ("yarn", Agent::Yarn),

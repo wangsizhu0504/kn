@@ -1,7 +1,7 @@
 use crate::display::StyledOutput;
+use comfy_table::{presets::UTF8_FULL, Attribute, Cell, Color, ContentArrangement, Table};
 use std::fs;
 use std::path::Path;
-use comfy_table::{Table, Cell, Color, Attribute, ContentArrangement, presets::UTF8_FULL};
 
 pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     StyledOutput::header("Dependency Size Analysis");
@@ -33,7 +33,11 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
                         for scoped_entry in scoped_entries.flatten() {
                             let scoped_path = scoped_entry.path();
                             if scoped_path.is_dir() {
-                                let scoped_name = format!("{}/{}", name, scoped_entry.file_name().to_string_lossy());
+                                let scoped_name = format!(
+                                    "{}/{}",
+                                    name,
+                                    scoped_entry.file_name().to_string_lossy()
+                                );
                                 if let Ok(size) = calculate_dir_size(&scoped_path) {
                                     packages.push((scoped_name, size));
                                 }
@@ -64,11 +68,21 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
         .load_preset(UTF8_FULL)
         .set_content_arrangement(ContentArrangement::Dynamic)
         .set_header(vec![
-            Cell::new("No.").add_attribute(Attribute::Bold).fg(Color::Cyan),
-            Cell::new("Package Name").add_attribute(Attribute::Bold).fg(Color::Cyan),
-            Cell::new("Size").add_attribute(Attribute::Bold).fg(Color::Cyan),
-            Cell::new("%").add_attribute(Attribute::Bold).fg(Color::Cyan),
-            Cell::new("Size Bar").add_attribute(Attribute::Bold).fg(Color::Cyan),
+            Cell::new("No.")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Cyan),
+            Cell::new("Package Name")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Cyan),
+            Cell::new("Size")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Cyan),
+            Cell::new("%")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Cyan),
+            Cell::new("Size Bar")
+                .add_attribute(Attribute::Bold)
+                .fg(Color::Cyan),
         ]);
 
     let display_count = packages.len().min(20);
@@ -106,7 +120,10 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
         .load_preset(UTF8_FULL)
         .set_content_arrangement(ContentArrangement::Dynamic);
 
-    let large_packages: Vec<_> = packages.iter().filter(|(_, size)| *size > 1024 * 1024).collect();
+    let large_packages: Vec<_> = packages
+        .iter()
+        .filter(|(_, size)| *size > 1024 * 1024)
+        .collect();
     let avg_size = total_size / packages.len() as u64;
 
     summary_table.add_row(vec![
@@ -119,7 +136,11 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     ]);
     summary_table.add_row(vec![
         Cell::new("Packages > 1MB").add_attribute(Attribute::Bold),
-        Cell::new(large_packages.len().to_string()).fg(if large_packages.len() > 10 { Color::Red } else { Color::Green }),
+        Cell::new(large_packages.len().to_string()).fg(if large_packages.len() > 10 {
+            Color::Red
+        } else {
+            Color::Green
+        }),
     ]);
     summary_table.add_row(vec![
         Cell::new("Average package size").add_attribute(Attribute::Bold),
@@ -131,7 +152,10 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     // Show size breakdown
     if !large_packages.is_empty() {
         println!();
-        StyledOutput::warning(&format!("⚠  {} package(s) are larger than 1 MB", large_packages.len()));
+        StyledOutput::warning(&format!(
+            "⚠  {} package(s) are larger than 1 MB",
+            large_packages.len()
+        ));
         StyledOutput::info("💡 Consider using lighter alternatives for large packages");
     }
 
@@ -174,4 +198,3 @@ fn format_size(bytes: u64) -> String {
         format!("{} B", bytes)
     }
 }
-

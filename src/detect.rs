@@ -1,6 +1,6 @@
 use std::fs::File;
-use std::path::Path;
 use std::io::Read;
+use std::path::Path;
 
 use crate::agents::{Agent, AGENT_MAP};
 
@@ -44,7 +44,10 @@ pub fn detect(options: crate::runner::DetectOptions) -> Option<Agent> {
                     }
                 }
             }
-            return AGENT_MAP.iter().find(|(n, _)| *n == name).map(|(_, agent)| *agent);
+            return AGENT_MAP
+                .iter()
+                .find(|(n, _)| *n == name)
+                .map(|(_, agent)| *agent);
         }
     }
 
@@ -71,7 +74,10 @@ pub fn detect(options: crate::runner::DetectOptions) -> Option<Agent> {
         // Check for lock files in this directory
         for (lock_file, manager) in &lock_files {
             if ancestor.join(lock_file).exists() {
-                return AGENT_MAP.iter().find(|(n, _)| *n == *manager).map(|(_, agent)| *agent);
+                return AGENT_MAP
+                    .iter()
+                    .find(|(n, _)| *n == *manager)
+                    .map(|(_, agent)| *agent);
             }
         }
 
