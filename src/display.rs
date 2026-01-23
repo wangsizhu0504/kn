@@ -1,5 +1,5 @@
 use console::{style, Emoji, Term};
-use indicatif::{ProgressBar, ProgressStyle, MultiProgress};
+use indicatif::{ProgressBar, ProgressStyle};
 use comfy_table::{Table, Cell, Color as TableColor, Attribute, ContentArrangement, presets::UTF8_FULL};
 
 // Emoji constants

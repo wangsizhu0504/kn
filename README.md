@@ -92,33 +92,60 @@ kn analyze           # Analyze project dependencies
 
 ## 🚀 Installation
 
-### From Source (Recommended)
+### Quick Install (Recommended)
+
+#### macOS / Linux
+
+```bash
+# One-line installation
+curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh | bash
+```
+
+Or download and run manually:
+
+```bash
+# Download and run the install script
+curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
+
+#### Windows (Git Bash / WSL)
+
+```bash
+# Using the same install script
+curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh | bash
+```
+
+### Build from Source
+
+If you have Rust and Cargo installed:
+
+```bash
+# Install directly from Git
+cargo install --git https://github.com/wangsizhu0504/kn
+```
+
+### Manual Build
 
 ```bash
 # Clone the repository
 git clone https://github.com/wangsizhu0504/kn.git
 cd kn
 
-# Build and install
+# Build release binary
 cargo build --release
-cargo install --path .
+
+# Binary will be at: ./target/release/kn
+# Copy it to your PATH
+cp target/release/kn ~/.local/bin/  # or /usr/local/bin
 ```
 
-### Using Installation Script
+### Verify Installation
 
 ```bash
-# Clone and run install script
-git clone https://github.com/wangsizhu0504/kn.git
-cd kn
-chmod +x install.sh
-./install.sh
-```
-
-### Manual Build
-
-```bash
-cargo build --release
-# Binary will be in ./target/release/kn
+kn --version
+kn --help
 ```
 
 ---
