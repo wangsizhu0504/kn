@@ -1,9 +1,9 @@
 name: Release
 
 on:
-   push:
-     tags:
-       - "v*.*.*" # 触发条件：推送形如 v1.0.0 的标签
+  push:
+    tags:
+      - "v*.*.*" # 触发条件：推送形如 v1.0.0 的标签
 
 env:
   CARGO_TERM_COLOR: always
@@ -100,8 +100,12 @@ jobs:
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
 
-      - name: Strip binary (Unix)
-        if: matrix.os != 'windows-latest'
+      - name: Strip binary (Linux ARM64)
+        if: matrix.target == 'aarch64-unknown-linux-gnu'
+        run: aarch64-linux-gnu-strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
+
+      - name: Strip binary (Other Unix)
+        if: matrix.os != 'windows-latest' && matrix.target != 'aarch64-unknown-linux-gnu'
         run: strip target/${{ matrix.target }}/release/${{ matrix.artifact_name }}
 
       - name: Package binary (Linux/macOS)
