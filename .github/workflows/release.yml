@@ -1,9 +1,9 @@
 name: Release
 
-on:
-  push:
-    tags:
-      - "v*.*.*" # 触发条件：推送形如 v1.0.0 的标签
+# on:
+#   push:
+#     tags:
+#       - "v*.*.*" # 触发条件：推送形如 v1.0.0 的标签
 
 env:
   CARGO_TERM_COLOR: always
