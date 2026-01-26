@@ -56,10 +56,12 @@ fn fetch_latest_version() -> Option<String> {
     // 使用 GitHub API 获取最新 release 的 tag_name（只有几 KB 的 JSON 数据）
     let output = std::process::Command::new("curl")
         .args([
-            "-s",                                           // 静默模式
-            "-m", "5",                                      // 最大 5 秒超时
-            "-H", "Accept: application/vnd.github.v3+json", // GitHub API v3
-            GITHUB_API_URL,                                 // 只请求 /releases/latest 端点
+            "-s", // 静默模式
+            "-m",
+            "5", // 最大 5 秒超时
+            "-H",
+            "Accept: application/vnd.github.v3+json", // GitHub API v3
+            GITHUB_API_URL,                           // 只请求 /releases/latest 端点
         ])
         .output()
         .ok()?;
@@ -78,14 +80,8 @@ fn fetch_latest_version() -> Option<String> {
 
 fn compare_versions(current: &str, latest: &str) -> bool {
     // Simple version comparison (works for semver)
-    let current_parts: Vec<u32> = current
-        .split('.')
-        .filter_map(|s| s.parse().ok())
-        .collect();
-    let latest_parts: Vec<u32> = latest
-        .split('.')
-        .filter_map(|s| s.parse().ok())
-        .collect();
+    let current_parts: Vec<u32> = current.split('.').filter_map(|s| s.parse().ok()).collect();
+    let latest_parts: Vec<u32> = latest.split('.').filter_map(|s| s.parse().ok()).collect();
 
     for i in 0..std::cmp::max(current_parts.len(), latest_parts.len()) {
         let curr = current_parts.get(i).unwrap_or(&0);
@@ -149,11 +145,18 @@ fn show_update_message(latest_version: &str) {
     eprintln!();
     eprintln!("\x1b[33m╭─────────────────────────────────────────────────────────╮\x1b[0m");
     eprintln!("\x1b[33m│                                                         │\x1b[0m");
-    eprintln!("\x1b[33m│   \x1b[1m📦 Update available!\x1b[0m                              │\x1b[0m");
+    eprintln!(
+        "\x1b[33m│   \x1b[1m📦 Update available!\x1b[0m                              │\x1b[0m"
+    );
     eprintln!("\x1b[33m│                                                         │\x1b[0m");
-    eprintln!("\x1b[33m│   Current: \x1b[90m{:<10}\x1b[0m → Latest: \x1b[32m{:<10}\x1b[0m       │\x1b[0m", CURRENT_VERSION, latest_version);
+    eprintln!(
+        "\x1b[33m│   Current: \x1b[90m{:<10}\x1b[0m → Latest: \x1b[32m{:<10}\x1b[0m       │\x1b[0m",
+        CURRENT_VERSION, latest_version
+    );
     eprintln!("\x1b[33m│                                                         │\x1b[0m");
-    eprintln!("\x1b[33m│   Run \x1b[36mkn upgrade-self\x1b[0m to update                     │\x1b[0m");
+    eprintln!(
+        "\x1b[33m│   Run \x1b[36mkn upgrade-self\x1b[0m to update                     │\x1b[0m"
+    );
     eprintln!("\x1b[33m│                                                         │\x1b[0m");
     eprintln!("\x1b[33m╰─────────────────────────────────────────────────────────╯\x1b[0m");
     eprintln!();

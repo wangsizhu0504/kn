@@ -11,8 +11,10 @@ fn fetch_latest_version() -> Result<String, Box<dyn std::error::Error>> {
     let output = Command::new("curl")
         .args([
             "-s",
-            "-m", "5",
-            "-H", "Accept: application/vnd.github.v3+json",
+            "-m",
+            "5",
+            "-H",
+            "Accept: application/vnd.github.v3+json",
             GITHUB_API_URL,
         ])
         .output()?;
@@ -22,9 +24,7 @@ fn fetch_latest_version() -> Result<String, Box<dyn std::error::Error>> {
     }
 
     let response: serde_json::Value = serde_json::from_slice(&output.stdout)?;
-    let tag_name = response["tag_name"]
-        .as_str()
-        .ok_or("No tag_name found")?;
+    let tag_name = response["tag_name"].as_str().ok_or("No tag_name found")?;
 
     Ok(tag_name.trim_start_matches('v').to_string())
 }
@@ -51,14 +51,20 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     // 检查是否需要更新
     if CURRENT_VERSION == latest_version {
         println!();
-        println!("\x1b[32m✓\x1b[0m Already using the latest version \x1b[36m{}\x1b[0m", CURRENT_VERSION);
+        println!(
+            "\x1b[32m✓\x1b[0m Already using the latest version \x1b[36m{}\x1b[0m",
+            CURRENT_VERSION
+        );
         println!();
         return Ok(());
     }
 
     // 显示版本信息
     println!();
-    println!("Upgrading kn \x1b[90m{}\x1b[0m → \x1b[32m{}\x1b[0m", CURRENT_VERSION, latest_version);
+    println!(
+        "Upgrading kn \x1b[90m{}\x1b[0m → \x1b[32m{}\x1b[0m",
+        CURRENT_VERSION, latest_version
+    );
     println!();
 
     // 获取当前可执行文件路径
@@ -66,7 +72,12 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
 
     // 检测操作系统和架构
     let (os, arch) = detect_platform()?;
-    let archive_name = format!("kn-{}-{}.{}", os, arch, if os == "windows" { "zip" } else { "tar.gz" });
+    let archive_name = format!(
+        "kn-{}-{}.{}",
+        os,
+        arch,
+        if os == "windows" { "zip" } else { "tar.gz" }
+    );
     let download_url = format!("{}/{}", GITHUB_RELEASE_URL, archive_name);
 
     // 创建临时目录
@@ -82,7 +93,8 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
         .args([
             "-#",
             "-L",
-            "-o", archive_path.to_str().unwrap(),
+            "-o",
+            archive_path.to_str().unwrap(),
             &download_url,
         ])
         .status()?;
@@ -171,7 +183,10 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
 
     // 成功消息
     println!();
-    println!("\x1b[32m✓\x1b[0m Successfully upgraded kn to \x1b[36mv{}\x1b[0m", latest_version);
+    println!(
+        "\x1b[32m✓\x1b[0m Successfully upgraded kn to \x1b[36mv{}\x1b[0m",
+        latest_version
+    );
     println!();
 
     Ok(())
