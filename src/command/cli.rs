@@ -1,7 +1,7 @@
 use crate::cli_parser::{Cli, Commands};
 use crate::command::{
     agent, analyze, clean, clean_install, completion, doctor, execute, info, install, list,
-    parallel, run, size, stats, uninstall, upgrade, watch,
+    parallel, run, size, stats, uninstall, upgrade, upgrade_self, watch,
 };
 use crate::display::StyledOutput;
 
@@ -31,6 +31,7 @@ impl Cli {
                 interactive,
                 latest,
             } => upgrade::handle(packages, interactive, latest),
+            Commands::UpgradeSelf => upgrade_self::handle(),
             Commands::CleanInstall { force, no_optional } => {
                 clean_install::handle(force, no_optional)
             }

@@ -120,6 +120,7 @@ impl StyledOutput {
             ("uninstall", "remove, rm", "Uninstall packages", "\x1b[31m"),
             ("execute", "exec, x", "Execute package binaries", "\x1b[33m"),
             ("upgrade", "update, up", "Upgrade dependencies", "\x1b[35m"),
+            ("upgrade-self", "", "Upgrade kn to the latest version", "\x1b[35m"),
             (
                 "clean-install",
                 "ci",

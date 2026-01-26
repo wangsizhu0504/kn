@@ -47,6 +47,7 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
         "upgrade",
         "update",
         "up",
+        "upgrade-self",
         "clean-install",
         "ci",
         "agent",
@@ -154,6 +155,7 @@ pub enum Commands {
         interactive: bool,
         latest: bool,
     },
+    UpgradeSelf,
     CleanInstall {
         force: bool,
         no_optional: bool,
@@ -244,6 +246,7 @@ impl Cli {
                 i += 1;
                 parse_upgrade_command(&args, &mut i)?
             }
+            "upgrade-self" => Commands::UpgradeSelf,
             "clean-install" | "ci" => {
                 i += 1;
                 parse_clean_install_command(&args, &mut i)?

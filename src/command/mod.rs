@@ -15,4 +15,5 @@ pub mod size;
 pub mod stats;
 pub mod uninstall;
 pub mod upgrade;
+pub mod upgrade_self;
 pub mod watch;
