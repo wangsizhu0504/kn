@@ -330,21 +330,98 @@ pub fn parse_nu(
     }
 }
 
-/// Parse function for agent commands (na)
-/// Maps to running the package manager directly
-pub fn parse_na(
-    agent: Agent,
-    args: Vec<String>,
-    _ctx: Option<RunnerContext>,
-) -> (String, Vec<String>) {
-    let agent_name = match agent {
-        Agent::Npm => "npm",
-        Agent::Yarn => "yarn",
-        Agent::YarnBerry => "yarn",
-        Agent::Pnpm => "pnpm",
-        Agent::Pnpm6 => "pnpm",
-        Agent::Bun => "bun",
-    };
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::agents::Agent;
 
-    (agent_name.to_string(), args)
+    #[test]
+    fn test_parse_ni() {
+        let (cmd, args) = parse_ni(Agent::Npm, vec!["lodash".to_string()], None);
+        assert_eq!(cmd, "npm");
+        assert_eq!(args, vec!["install", "lodash"]);
+
+        let (cmd, args) = parse_ni(
+            Agent::Npm,
+            vec!["-g".to_string(), "typescript".to_string()],
+            None,
+        );
+        assert_eq!(cmd, "npm");
+        assert!(args.contains(&"-g".to_string()));
+        assert!(args.contains(&"typescript".to_string()));
+
+        let (cmd, args) = parse_ni(Agent::Npm, vec!["--frozen".to_string()], None);
+        assert_eq!(cmd, "npm");
+        assert_eq!(args, vec!["ci"]);
+
+        let (cmd, args) = parse_ni(Agent::Yarn, vec!["react".to_string()], None);
+        assert_eq!(cmd, "yarn");
+        assert_eq!(args, vec!["add", "react"]);
+
+        let (cmd, args) = parse_ni(Agent::Bun, vec!["express".to_string()], None);
+        assert_eq!(cmd, "bun");
+        assert_eq!(args, vec!["add", "express"]);
+    }
+
+    #[test]
+    fn test_parse_nlx() {
+        let (cmd, args) = parse_nlx(
+            Agent::Npm,
+            vec!["cowsay".to_string(), "Hello".to_string()],
+            None,
+        );
+        assert_eq!(cmd, "npx");
+        assert_eq!(args, vec!["cowsay", "Hello"]);
+
+        let (cmd, args) = parse_nlx(
+            Agent::Yarn,
+            vec!["cowsay".to_string(), "Hello".to_string()],
+            None,
+        );
+        assert_eq!(cmd, "yarn");
+        assert_eq!(args, vec!["dlx", "cowsay", "Hello"]);
+
+        let (cmd, args) = parse_nlx(
+            Agent::Bun,
+            vec!["cowsay".to_string(), "Hello".to_string()],
+            None,
+        );
+        assert_eq!(cmd, "bunx");
+        assert_eq!(args, vec!["cowsay", "Hello"]);
+    }
+
+    #[test]
+    fn test_parse_nun() {
+        let (cmd, args) = parse_nun(Agent::Npm, vec!["lodash".to_string()], None);
+        assert_eq!(cmd, "npm");
+        assert_eq!(args, vec!["uninstall", "lodash"]);
+
+        let (cmd, args) = parse_nun(Agent::Yarn, vec!["react".to_string()], None);
+        assert_eq!(cmd, "yarn");
+        assert_eq!(args, vec!["remove", "react"]);
+
+        let (cmd, args) = parse_nun(
+            Agent::Pnpm,
+            vec!["-g".to_string(), "typescript".to_string()],
+            None,
+        );
+        assert_eq!(cmd, "pnpm");
+        assert!(args.contains(&"-g".to_string()));
+        assert!(args.contains(&"typescript".to_string()));
+    }
+
+    #[test]
+    fn test_parse_nu() {
+        let (cmd, args) = parse_nu(Agent::Npm, vec!["lodash".to_string()], None);
+        assert_eq!(cmd, "npm");
+        assert_eq!(args, vec!["update", "lodash"]);
+
+        let (cmd, args) = parse_nu(Agent::Yarn, vec!["react".to_string()], None);
+        assert_eq!(cmd, "yarn");
+        assert_eq!(args, vec!["upgrade", "react"]);
+
+        let (cmd, args) = parse_nu(Agent::YarnBerry, vec!["react".to_string()], None);
+        assert_eq!(cmd, "yarn");
+        assert_eq!(args, vec!["up", "react"]);
+    }
 }

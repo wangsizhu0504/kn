@@ -3,6 +3,7 @@ use std::io::BufRead;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command, Stdio};
 use std::{env, io};
+use tracing::{debug, info, warn};
 
 use crate::agents::Agent;
 use crate::agents::AGENT_MAP;
@@ -70,6 +71,7 @@ pub fn run(
     options: &mut DetectOptions,
 ) -> Result<(), Box<dyn std::error::Error>> {
     let version = env!("CARGO_PKG_VERSION");
+    debug!("Running command with args: {:?}", args);
 
     let mut args = args;
     if args.len() > 2 && args[0] == "-C" {
@@ -88,29 +90,6 @@ pub fn run(
     }
     if args.len() == 1 && (args[0] == "-h" || args[0] == "--help") {
         StyledOutput::opencode_header();
-        println!("v{}\n", version);
-        println!("USAGE:");
-        println!("    kn <command> [args...]  # All commands");
-        println!();
-        StyledOutput::section_title("Commands");
-        StyledOutput::command_example("install, i", "Install packages");
-        StyledOutput::command_example("run, r", "Run scripts");
-        StyledOutput::command_example("uninstall", "Uninstall packages");
-        StyledOutput::command_example("exec, x", "Execute packages");
-        StyledOutput::command_example("upgrade, update", "Upgrade dependencies");
-        StyledOutput::command_example("clean-install, ci", "Clean install");
-        StyledOutput::command_example("agent", "Run package manager");
-        StyledOutput::command_example("list", "List scripts");
-        StyledOutput::command_example("info", "Show package manager info");
-        println!();
-        StyledOutput::section_title("Examples");
-        StyledOutput::command_example("kn i react", "Install react");
-        StyledOutput::command_example("kn r dev", "Run dev script");
-        StyledOutput::command_example("kn uninstall webpack", "Uninstall webpack");
-        StyledOutput::command_example("kn exec tsc", "Execute typescript");
-        StyledOutput::command_example("kn", "List all scripts");
-        println!();
-        StyledOutput::info("For more documentation, visit: https://github.com/wangsizhu0504/kn");
         return Ok(());
     }
 
@@ -126,18 +105,11 @@ pub fn run(
 
 type CommandResult = Result<Option<(String, Vec<String>)>, Box<dyn std::error::Error>>;
 
-// Public function to get command without executing
-pub fn get_cli_command_direct(
-    func: Runner,
-    args: Vec<String>,
-    options: DetectOptions,
-) -> CommandResult {
-    get_cli_command(func, args, options)
-}
-
 fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> CommandResult {
+    debug!("Getting CLI command with args: {:?}", args);
     let global = "-g".to_string();
     if args.contains(&global) {
+        info!("Using global agent for command");
         return Ok(Some(func(get_global_agent(), args, None)));
     }
     let mut agent = if let Some(v) = detect(options.clone()) {
@@ -145,6 +117,7 @@ fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> C
     } else {
         get_default_agent(options.programmatic)
     };
+    debug!("Selected agent: {:?}", agent);
 
     if agent == DefaultAgent::Prompt {
         let items: Vec<&str> = AGENT_MAP
@@ -154,6 +127,7 @@ fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> C
             .collect();
         let selection = Select::new("script to run:", items).prompt();
         if let Ok(selection) = selection {
+            info!("User selected agent: {}", selection);
             if let Some(agent_value) = AGENT_MAP
                 .iter()
                 .find(|(name, _)| *name == selection)
@@ -161,6 +135,7 @@ fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> C
             {
                 agent = DefaultAgent::Agent(agent_value);
             } else {
+                warn!("Invalid agent selection");
                 return Ok(None);
             }
         } else {
@@ -179,8 +154,10 @@ fn get_cli_command(func: Runner, args: Vec<String>, options: DetectOptions) -> C
 }
 
 pub fn execa_command(agent: &str, args: Option<Vec<String>>) -> Result<(), io::Error> {
+    let args_vec = args.unwrap_or_default();
+    info!("Executing command: {} {:?}", agent, args_vec);
     let mut command = Command::new(agent)
-        .args(args.unwrap_or_default())
+        .args(&args_vec)
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .spawn()

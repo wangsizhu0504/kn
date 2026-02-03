@@ -1,4 +1,3 @@
-use crate::command::stats;
 use crate::command_utils::{parse_package_json, run_script_fast};
 use crate::display::StyledOutput;
 use inquire::Select;
@@ -31,9 +30,8 @@ pub fn handle(
             let result = run_script_fast(&final_script, &args);
             let duration = start.elapsed();
 
-            // Record stats
+            // Show completion time
             if result.is_ok() {
-                stats::record_execution(&final_script, duration.as_millis() as u64);
                 println!(
                     "\n\x1b[90m✓ Completed in {:.2}s\x1b[0m",
                     duration.as_secs_f64()
@@ -144,21 +142,15 @@ fn show_available_scripts() -> Result<(), Box<dyn std::error::Error>> {
         return Ok(());
     }
 
-    // Get execution stats for sorting
-    let all_stats = stats::get_all_stats();
-
-    // Create script items with stats
+    // Create script items
     let mut script_items: Vec<ScriptItem> = scripts
         .iter()
-        .map(|(name, cmd)| {
-            let stat = all_stats.iter().find(|s| &s.script == name);
-            ScriptItem {
-                name: name.clone(),
-                command: cmd.clone(),
-                runs: stat.map(|s| s.count).unwrap_or(0),
-                last_run: stat.and_then(|s| s.last_run),
-                avg_time: stat.map(|s| s.average_time).unwrap_or(0),
-            }
+        .map(|(name, cmd)| ScriptItem {
+            name: name.clone(),
+            command: cmd.clone(),
+            runs: 0,
+            last_run: None,
+            avg_time: 0,
         })
         .collect();
 
@@ -187,9 +179,8 @@ fn show_available_scripts() -> Result<(), Box<dyn std::error::Error>> {
                 let result = run_script_fast(&item.name, &[]);
                 let duration = start.elapsed();
 
-                // Record stats
+                // Show completion time
                 if result.is_ok() {
-                    stats::record_execution(&item.name, duration.as_millis() as u64);
                     println!(
                         "\n\x1b[90m✓ Completed in {:.2}s\x1b[0m",
                         duration.as_secs_f64()

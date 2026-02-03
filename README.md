@@ -1,275 +1,87 @@
 <div align="center">
 
-# ⚡ KN - Blazing Fast Node.js Package Manager CLI
+# ⚡ KN
 
-**A modern, intelligent command-line tool for Node.js package management and script execution**
+**Blazing fast Node.js package manager CLI written in Rust**
 
 [![Rust](https://img.shields.io/badge/Rust-2021-orange.svg)](https://www.rust-lang.org/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-macOS%20%7C%20Linux%20%7C%20Windows-lightgrey.svg)](https://github.com/wangsizhu0504/kn)
 
-[Features](#-features) • [Installation](#-installation) • [Usage](#-usage) • [Commands](#-commands) • [Contributing](#-contributing)
-
 </div>
-
----
-
-## 🎯 What is KN?
-
-**KN** is a lightweight, high-performance CLI tool written in Rust that simplifies Node.js package management and script execution. It automatically detects your package manager (npm, yarn, pnpm, bun) and provides an enhanced developer experience with intelligent features like fuzzy search, and performance tracking.
 
 ---
 
 ## ✨ Features
 
-### Core Capabilities
-
-#### 📦 **Smart Package Management**
-- Automatic package manager detection (npm/yarn/pnpm/bun)
-- Support for all standard operations: install, uninstall, upgrade
-- Enhanced install with progress tracking and time statistics
-- Clean install with frozen lockfile support
-
-#### 🏃 **Enhanced Script Execution**
-- Fast script running with performance tracking
-- Fuzzy matching for script names (typo-tolerant)
-- Interactive script selector when no name provided
-- Parallel execution of multiple scripts
-- Watch mode with file change detection
-
-#### 🛠️ **Developer Tools**
-- **`kn doctor`** - Comprehensive project health check
-  - Security vulnerability scan
-  - Duplicate dependency detection
-  - Node.js version compatibility
-  - Lock file validation
-
-- **`kn size`** - Disk usage analysis
-  - Visual breakdown of package sizes
-  - Identifies large dependencies
-  - Total size statistics
-
-- **`kn completion`** - Shell auto-completion
-  - Support for bash, zsh, and fish
-  - Command and script name completion
-
-### Advanced Features
-
-####  **Performance Statistics**
-- Automatic tracking of script execution times
-- Run count and frequency analysis
-- Last run timestamps
-- Performance insights with `kn stats`
-
-#### ⚡ **Parallel Execution**
-```bash
-kn parallel lint test build  # Run multiple scripts concurrently
-kn p dev test                # Short alias
-```
-
-#### 🧹 **Smart Cleanup**
-```bash
-kn clean              # Remove node_modules, dist, etc.
-kn clean --cache      # Clean package manager cache
-kn clean --all        # Deep clean everything
-```
-
-#### 👀 **Watch Mode**
-```bash
-kn watch dev         # Auto-rerun on file changes
-```
-
-#### 📊 **Dependency Analysis**
-```bash
-kn analyze           # Analyze project dependencies
-                     # - Dependency tree
-                     # - Disk usage
-                     # - Outdated packages
-                     # - Duplicate detection
-```
+- 🎨 Beautiful terminal UI with modern styling
+- 📦 Auto-detects package manager (npm/yarn/pnpm/bun)
+- 🏃 Fast script execution with fuzzy matching
+- 👀 Watch mode for auto-rerun on file changes
+- 📊 Analyze package sizes and disk usage
+- 🧹 Smart cleanup for project files and caches
 
 ---
 
 ## 🚀 Installation
 
-### Quick Install (Recommended)
-
-#### macOS / Linux
+### Quick Install
 
 ```bash
-# One-line installation
 curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh | bash
 ```
 
-Or download and run manually:
+### From Source
 
 ```bash
-# Download and run the install script
-curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh -o install.sh
-chmod +x install.sh
-./install.sh
-```
-
-#### Windows (Git Bash / WSL)
-
-```bash
-# Using the same install script
-curl -fsSL https://raw.githubusercontent.com/wangsizhu0504/kn/main/install.sh | bash
-```
-
-### Build from Source
-
-If you have Rust and Cargo installed:
-
-```bash
-# Install directly from Git
 cargo install --git https://github.com/wangsizhu0504/kn
-```
-
-### Manual Build
-
-```bash
-# Clone the repository
-git clone https://github.com/wangsizhu0504/kn.git
-cd kn
-
-# Build release binary
-cargo build --release
-
-# Binary will be at: ./target/release/kn
-# Copy it to your PATH
-cp target/release/kn ~/.local/bin/  # or /usr/local/bin
-```
-
-### Verify Installation
-
-```bash
-kn --version
-kn --help
 ```
 
 ---
 
 ## 📖 Usage
 
-### Quick Start
-
 ```bash
-# Install dependencies
-kn install
-
-# Run a script
-kn run dev
-
-# Show available commands
-kn help
-```
-
-### Basic Commands
-
-#### Package Management
-```bash
-kn install <package>           # Install package(s)
-kn i <package>                 # Short alias
-kn install <pkg> -D            # Install as dev dependency
-kn install <pkg> -g            # Install globally
-kn install                     # Install all dependencies
-
-kn uninstall <package>         # Remove package(s)
-kn rm <package>                # Short alias
-
-kn upgrade                     # Update all dependencies
-kn upgrade <package>           # Update specific package
-kn update                      # Alias for upgrade
-
-kn clean-install               # Clean install (like npm ci)
-kn ci                          # Short alias
-```
-
-#### Script Execution
-```bash
-kn run <script>                # Run npm script
-kn r <script>                  # Short alias
-kn run                         # Interactive script selector
-
-kn execute <command>           # Execute package binary
-kn x <command>                 # Short alias
-```
-
-#### Information & Analysis
-```bash
-kn list                        # List all scripts (dashboard view)
-kn ls                          # Short alias
-
-kn info                        # Show package manager info
-kn doctor                      # Project health check
-kn size                        # Analyze package sizes
-kn stats                       # Show performance statistics
-kn analyze                     # Dependency analysis
-```
-
-#### Productivity Features
-```bash
-# Parallel execution
-kn parallel <script1> <script2>  # Run scripts in parallel
-kn p <script1> <script2>         # Short alias
-
-# Watch mode
-kn watch <script>              # Watch and auto-rerun
-
-# Cleanup
-kn clean                       # Clean project files
-kn clean --cache               # Clean PM cache
-kn clean --all                 # Deep clean
-
-# Shell completion
-kn completion bash             # Generate bash completion
-kn completion zsh              # Generate zsh completion
-kn completion fish             # Generate fish completion
+kn help              # Show all commands
+kn install react     # Install packages
+kn i react -D        # Install as dev dependency
+kn run dev           # Run npm scripts
+kn list              # Show available scripts
+kn info              # Show environment info
+kn size              # Analyze package sizes
+kn clean             # Clean project files
 ```
 
 ---
 
 ## 🎯 Commands
 
-### Core Commands
+```
+  install (i, add)        Install packages (auto-detects package manager)
+  run (r)                 Run npm scripts from package.json
+  uninstall (remove, rm)  Uninstall packages
+  execute (exec, x)       Execute package binaries
+  upgrade (update, up)    Upgrade dependencies
+  upgrade-self            Upgrade kn to the latest version
+  clean-install (ci)      Clean install dependencies (frozen lockfile)
+  list (ls)               Show available package scripts
+  info (env)              Show package manager and environment information
+  watch (w)               Watch files and re-run script on changes
+  clean                   Clean node_modules, cache, etc.
+  size                    Analyze package sizes
+  help                    Show this help message
+```
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `install` | `i`, `add` | Install dependencies |
-| `uninstall` | `rm`, `remove` | Remove dependencies |
-| `run` | `r` | Run npm scripts |
-| `execute` | `x`, `exec` | Execute package binaries |
-| `upgrade` | `update`, `up` | Update dependencies |
-| `clean-install` | `ci` | Clean install with lockfile |
+---
 
-### Information Commands
+## ⚙️ Configuration
 
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `list` | `ls` | List available scripts |
-| `info` | `env` | Show package manager info |
-| `doctor` | - | Project health check |
-| `size` | - | Analyze package sizes |
-| `stats` | - | Show performance stats |
-| `analyze` | - | Dependency analysis |
+Create `~/.knrc`:
 
-### Productivity Commands
-
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `parallel` | `p` | Run scripts in parallel |
-| `watch` | `w` | Watch mode |
-| `clean` | - | Clean project files |
-| `completion` | - | Shell auto-completion |
-
-### Utility Commands
-
-| Command | Aliases | Description |
-|---------|---------|-------------|
-| `agent` | - | Use package manager directly |
-| `help` | `-h`, `--help` | Show help information |
-| `--version` | `-v` | Show version |
+```ini
+default_agent = npm
+global_agent = npm
+```
 
 ---
 
@@ -353,15 +165,6 @@ kn execute tsc                # Run TypeScript compiler
 kn x eslint src/              # Using alias
 ```
 
-#### `kn parallel <script1> <script2> ...`
-Run multiple scripts in parallel.
-
-**Examples:**
-```bash
-kn parallel lint test build  # Run 3 scripts
-kn p dev test                # Using alias
-```
-
 #### `kn watch <script> [patterns...]`
 Watch files and auto-rerun script on changes.
 
@@ -432,14 +235,6 @@ Show script execution performance statistics.
 kn stats                     # Show all stats
 ```
 
-#### `kn analyze`
-Analyze project dependencies and structure.
-
-**Examples:**
-```bash
-kn analyze                   # Dependency analysis
-```
-
 ### Productivity
 
 #### `kn clean [options]`
@@ -455,32 +250,6 @@ Clean project files and caches.
 kn clean                     # Clean project
 kn clean --cache             # Clean cache only
 kn clean --all               # Deep clean
-```
-
-#### `kn completion <shell>`
-Generate shell completion scripts.
-
-**Supported Shells:**
-- `bash`
-- `zsh`
-- `fish`
-
-**Examples:**
-```bash
-kn completion bash           # Generate bash completion
-kn completion fish > ~/.config/fish/completions/kn.fish
-```
-
-**Installation:**
-```bash
-# Bash (~/.bashrc)
-eval "$(kn completion bash)"
-
-# Zsh (~/.zshrc)
-eval "$(kn completion zsh)"
-
-# Fish
-kn completion fish > ~/.config/fish/completions/kn.fish
 ```
 
 ---
@@ -648,6 +417,59 @@ Package Manager Information
 
 ### Configuration File
 
+KN supports configuration via `.knrc` file (INI or JSON format) in your home directory.
+
+#### Configuration Location
+- Default: `~/.knrc` or `~/.knrc.json`
+- Custom: Set `KN_CONFIG_FILE` environment variable
+
+#### Configuration Options
+
+**JSON Format** (recommended for IDE support):
+```json
+{
+  "defaultAgent": "prompt",
+  "globalAgent": "npm",
+  "autoUpdate": true,
+  "collectStats": true,
+  "logLevel": "info"
+}
+```
+
+**INI Format** (backward compatible):
+```ini
+# ~/.knrc
+default_agent = prompt
+global_agent = npm
+auto_update = true
+log_level = info
+```
+
+#### Configuration Options Explained
+
+| Option | Values | Description |
+|--------|--------|-------------|
+| `defaultAgent` | `npm`, `yarn`, `pnpm`, `bun`, `prompt` | Default package manager |
+| `globalAgent` | `npm`, `yarn`, `pnpm`, `bun` | Package manager for global installs |
+| `autoUpdate` | `true`, `false` | Enable automatic update checks |
+| `logLevel` | `error`, `warn`, `info`, `debug`, `trace` | Logging verbosity |
+
+#### Environment Variables
+
+| Variable | Description | Example |
+|----------|-------------|---------|
+| `KN_CONFIG_FILE` | Custom config file path | `~/.config/kn/config.json` |
+| `KN_LOG` | Override log level | `debug`, `trace` |
+
+**Example with custom log level:**
+```bash
+KN_LOG=debug kn install package
+```
+
+---
+
+## ⚙️ Configuration
+
 Create a `~/.knrc` file to configure defaults:
 
 ```ini
@@ -677,7 +499,6 @@ global_agent = npm      # for global installs
 | **Script Execution** | `run`, `execute`, `watch`, `parallel` | Run and monitor scripts |
 | **Analysis** | `stats`, `analyze`, `list`, `info` | Project insights |
 | **Maintenance** | `clean`, `clean --cache`, `clean --all` | Project cleanup |
-| **Package Manager** | `agent` | Direct access to underlying PM |
 
 For detailed usage of each command, see [NEW_FEATURES.md](NEW_FEATURES.md).
 

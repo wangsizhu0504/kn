@@ -1,11 +1,10 @@
 use crate::display::StyledOutput;
-use comfy_table::{presets::UTF8_FULL, Attribute, Cell, Color, ContentArrangement, Table};
 use std::fs;
 use std::path::Path;
+use termimad::crossterm::style::Color;
+use termimad::{Alignment, MadSkin};
 
 pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
-    StyledOutput::header("Dependency Size Analysis");
-
     if !Path::new("node_modules").exists() {
         StyledOutput::warning("node_modules not found. Run 'kn install' first.");
         return Ok(());
@@ -62,101 +61,79 @@ pub fn handle() -> Result<(), Box<dyn std::error::Error>> {
     // Calculate total size
     let total_size: u64 = packages.iter().map(|(_, size)| size).sum();
 
+    let mut md = String::new();
+
     // Display top 20 packages in table format
-    let mut table = Table::new();
-    table
-        .load_preset(UTF8_FULL)
-        .set_content_arrangement(ContentArrangement::Dynamic)
-        .set_header(vec![
-            Cell::new("No.")
-                .add_attribute(Attribute::Bold)
-                .fg(Color::Cyan),
-            Cell::new("Package Name")
-                .add_attribute(Attribute::Bold)
-                .fg(Color::Cyan),
-            Cell::new("Size")
-                .add_attribute(Attribute::Bold)
-                .fg(Color::Cyan),
-            Cell::new("%")
-                .add_attribute(Attribute::Bold)
-                .fg(Color::Cyan),
-            Cell::new("Size Bar")
-                .add_attribute(Attribute::Bold)
-                .fg(Color::Cyan),
-        ]);
+    md.push_str("|-|-|-|-|-|\n");
+    md.push_str("|**No.**|**Package Name**|**Size**|**%**|**Status**|\n");
+    md.push_str("|-|-|-|-|-|\n");
 
     let display_count = packages.len().min(20);
     for (i, (name, size)) in packages.iter().take(display_count).enumerate() {
         let size_str = format_size(*size);
         let percentage = (*size as f64 / total_size as f64) * 100.0;
 
-        let bar_width = ((percentage / 2.0) as usize).min(40);
-        let bar = "█".repeat(bar_width);
-
-        // 根据大小设置颜色
-        let size_color = if *size > 5 * 1024 * 1024 {
-            Color::Red
+        // Visual indicator using emojis
+        let status = if *size > 5 * 1024 * 1024 {
+            "🔴 Large"
         } else if *size > 1024 * 1024 {
-            Color::Yellow
+            "🟡 Medium"
         } else {
-            Color::Green
+            "🟢 Small"
         };
 
-        table.add_row(vec![
-            Cell::new((i + 1).to_string()),
-            Cell::new(name),
-            Cell::new(size_str).fg(size_color),
-            Cell::new(format!("{:.1}%", percentage)),
-            Cell::new(bar).fg(Color::Blue),
-        ]);
+        md.push_str(&format!(
+            "| {} | **{}** | `{}` | {:.1}% | {} |\n",
+            i + 1,
+            name,
+            size_str,
+            percentage,
+            status
+        ));
     }
 
-    println!("\n{}", table);
+    md.push_str("|-|-|-|-|-|\n");
 
-    // Summary
-    println!("\n📊 Summary");
-    let mut summary_table = Table::new();
-    summary_table
-        .load_preset(UTF8_FULL)
-        .set_content_arrangement(ContentArrangement::Dynamic);
+    // Summary Section
+    md.push_str("### 📈 Summary\n\n");
 
-    let large_packages: Vec<_> = packages
+    let large_packages_count = packages
         .iter()
         .filter(|(_, size)| *size > 1024 * 1024)
-        .collect();
+        .count();
+
     let avg_size = total_size / packages.len() as u64;
 
-    summary_table.add_row(vec![
-        Cell::new("Total packages").add_attribute(Attribute::Bold),
-        Cell::new(packages.len().to_string()).fg(Color::Cyan),
-    ]);
-    summary_table.add_row(vec![
-        Cell::new("Total size").add_attribute(Attribute::Bold),
-        Cell::new(format_size(total_size)).fg(Color::Yellow),
-    ]);
-    summary_table.add_row(vec![
-        Cell::new("Packages > 1MB").add_attribute(Attribute::Bold),
-        Cell::new(large_packages.len().to_string()).fg(if large_packages.len() > 10 {
-            Color::Red
-        } else {
-            Color::Green
-        }),
-    ]);
-    summary_table.add_row(vec![
-        Cell::new("Average package size").add_attribute(Attribute::Bold),
-        Cell::new(format_size(avg_size)).fg(Color::Magenta),
-    ]);
+    md.push_str("|-|-|\n");
+    md.push_str("|**Metric**|**Value**|\n");
+    md.push_str("|-|-|\n");
+    md.push_str(&format!("| Total packages | **{}** |\n", packages.len()));
+    md.push_str(&format!("| Total size | `{}` |\n", format_size(total_size)));
+    md.push_str(&format!(
+        "| Packages > 1MB | **{}** |\n",
+        large_packages_count
+    ));
+    md.push_str(&format!("| Average size | `{}` |\n", format_size(avg_size)));
+    md.push_str("|-|-|\n");
 
-    println!("{}", summary_table);
+    let mut skin = MadSkin::default();
+    skin.set_headers_fg(Color::Cyan);
+    skin.bold.set_fg(Color::Yellow);
+    skin.table.compound_style.set_fg(Color::DarkGrey);
+    skin.paragraph.set_fg(Color::White);
+    skin.table_border_chars = termimad::ROUNDED_TABLE_BORDER_CHARS;
+    skin.table.align = Alignment::Left;
 
-    // Show size breakdown
-    if !large_packages.is_empty() {
+    skin.print_text(&md);
+
+    // Show size breakdown warning if needed
+    if large_packages_count > 0 {
         println!();
         StyledOutput::warning(&format!(
-            "⚠  {} package(s) are larger than 1 MB",
-            large_packages.len()
+            "{} package(s) are larger than 1 MB",
+            large_packages_count
         ));
-        StyledOutput::info("💡 Consider using lighter alternatives for large packages");
+        StyledOutput::info("Consider using lighter alternatives for large packages");
     }
 
     Ok(())

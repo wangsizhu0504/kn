@@ -1,7 +1,7 @@
 use crate::cli_parser::{Cli, Commands};
 use crate::command::{
-    agent, analyze, clean, clean_install, completion, doctor, execute, info, install, list,
-    parallel, run, size, stats, uninstall, upgrade, upgrade_self, watch,
+    clean, clean_install, execute, info, install, list, run, size, uninstall, upgrade,
+    upgrade_self, watch,
 };
 use crate::display::StyledOutput;
 
@@ -18,7 +18,8 @@ impl Cli {
                 dev,
                 global,
                 exact,
-            } => install::handle(packages, dev, global, exact),
+                ignore_scripts,
+            } => install::handle(packages, dev, global, exact, ignore_scripts),
             Commands::Run {
                 script_name,
                 args,
@@ -35,20 +36,14 @@ impl Cli {
             Commands::CleanInstall { force, no_optional } => {
                 clean_install::handle(force, no_optional)
             }
-            Commands::Agent { manager, args } => agent::handle(manager, args),
             Commands::List { json } => list::handle(json),
             Commands::Info { verbose } => info::handle(verbose),
             Commands::Watch {
                 script_name,
                 patterns,
             } => watch::handle(script_name, patterns),
-            Commands::Stats => stats::handle(),
-            Commands::Parallel { scripts } => parallel::handle(scripts),
             Commands::Clean { cache, all, global } => clean::handle(cache, all, global),
-            Commands::Analyze => analyze::handle(),
-            Commands::Doctor => doctor::handle(),
             Commands::Size => size::handle(),
-            Commands::Completion { shell } => completion::handle(shell),
             Commands::Help => {
                 StyledOutput::opencode_header();
                 Ok(())

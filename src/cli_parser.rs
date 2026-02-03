@@ -50,25 +50,15 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
         "upgrade-self",
         "clean-install",
         "ci",
-        "agent",
-        "npm",
-        "yarn",
-        "pnpm",
-        "bun",
         "list",
         "ls",
         "info",
         "env",
         "watch",
         "w",
-        "stats",
-        "parallel",
-        "p",
         "clean",
-        "analyze",
-        "doctor",
         "size",
-        "completion",
+        "view",
         "help",
     ];
 
@@ -136,6 +126,7 @@ pub enum Commands {
         dev: bool,
         global: bool,
         exact: bool,
+        ignore_scripts: bool,
     },
     Run {
         script_name: Option<String>,
@@ -160,10 +151,6 @@ pub enum Commands {
         force: bool,
         no_optional: bool,
     },
-    Agent {
-        manager: Option<String>,
-        args: Vec<String>,
-    },
     List {
         json: bool,
     },
@@ -174,21 +161,12 @@ pub enum Commands {
         script_name: String,
         patterns: Vec<String>,
     },
-    Stats,
-    Parallel {
-        scripts: Vec<String>,
-    },
     Clean {
         cache: bool,
         all: bool,
         global: bool,
     },
-    Analyze,
-    Doctor,
     Size,
-    Completion {
-        shell: Option<String>,
-    },
     Help,
 }
 
@@ -251,11 +229,6 @@ impl Cli {
                 i += 1;
                 parse_clean_install_command(&args, &mut i)?
             }
-            "agent" | "npm" | "yarn" | "pnpm" | "bun" => {
-                let agent_name = args[i].clone();
-                i += 1;
-                parse_agent_command(&args, &mut i, &agent_name)?
-            }
             "list" | "ls" => {
                 i += 1;
                 parse_list_command(&args, &mut i)?
@@ -268,22 +241,11 @@ impl Cli {
                 i += 1;
                 parse_watch_command(&args, &mut i)?
             }
-            "stats" => Commands::Stats,
-            "parallel" | "p" => {
-                i += 1;
-                parse_parallel_command(&args, &mut i)?
-            }
             "clean" => {
                 i += 1;
                 parse_clean_command(&args, &mut i)?
             }
-            "analyze" => Commands::Analyze,
-            "doctor" => Commands::Doctor,
             "size" => Commands::Size,
-            "completion" => {
-                i += 1;
-                parse_completion_command(&args, &mut i)?
-            }
             "help" | "--help" | "-h" => Commands::Help,
             "--version" | "-v" => {
                 println!("kn version {}", env!("CARGO_PKG_VERSION"));
@@ -301,16 +263,18 @@ fn parse_install_command(args: &[String], i: &mut usize) -> Result<Commands, Str
     let mut dev = false;
     let mut global = false;
     let mut exact = false;
+    let mut ignore_scripts = false;
 
     while *i < args.len() {
         match args[*i].as_str() {
             "--save-dev" | "-D" => dev = true,
             "-g" | "--global" => global = true,
             "--save-exact" | "-E" => exact = true,
+            "--ignore-scripts" => ignore_scripts = true,
             arg if arg.starts_with('-') => {
                 return Err(format_error_with_suggestion(
                     &format!("Unknown flag for install: {}", arg),
-                    "Valid flags: -D (--save-dev), -g (--global), -E (--save-exact)",
+                    "Valid flags: -D (--save-dev), -g (--global), -E (--save-exact), --ignore-scripts",
                 ));
             }
             _ => packages.push(args[*i].clone()),
@@ -324,6 +288,7 @@ fn parse_install_command(args: &[String], i: &mut usize) -> Result<Commands, Str
         dev,
         global,
         exact,
+        ignore_scripts,
     })
 }
 
@@ -333,19 +298,24 @@ fn parse_run_command(args: &[String], i: &mut usize) -> Result<Commands, String>
     let mut if_present = false;
 
     while *i < args.len() {
-        match args[*i].as_str() {
-            "--if-present" => if_present = true,
-            arg if arg.starts_with('-') => {
-                return Err(format_error_with_suggestion(
-                    &format!("Unknown flag for run: {}", arg),
-                    "Valid flag: --if-present",
-                ));
-            }
-            _ => {
-                if script_name.is_none() {
+        let arg = args[*i].as_str();
+
+        // Once we have a script name, all remaining args (including flags) go to the script
+        if script_name.is_some() {
+            script_args.push(args[*i].clone());
+        } else {
+            // Before script name, only parse kn's own flags
+            match arg {
+                "--if-present" => if_present = true,
+                arg if arg.starts_with('-') => {
+                    return Err(format_error_with_suggestion(
+                        &format!("Unknown flag for run: {}", arg),
+                        "Valid flag: --if-present (must come before script name)",
+                    ));
+                }
+                _ => {
+                    // This is the script name
                     script_name = Some(args[*i].clone());
-                } else {
-                    script_args.push(args[*i].clone());
                 }
             }
         }
@@ -464,35 +434,6 @@ fn parse_clean_install_command(args: &[String], i: &mut usize) -> Result<Command
     Ok(Commands::CleanInstall { force, no_optional })
 }
 
-fn parse_agent_command(
-    args: &[String],
-    i: &mut usize,
-    agent_name: &str,
-) -> Result<Commands, String> {
-    let manager = match agent_name {
-        "npm" | "yarn" | "pnpm" | "bun" => Some(agent_name.to_string()),
-        _ => None,
-    };
-
-    let mut agent_args = Vec::new();
-    while *i < args.len() {
-        agent_args.push(args[*i].clone());
-        *i += 1;
-    }
-
-    if agent_args.is_empty() {
-        return Err(format_error_with_suggestion(
-            "Agent command requires arguments",
-            "Usage: kn agent [npm|yarn|pnpm|bun] <args...>",
-        ));
-    }
-
-    Ok(Commands::Agent {
-        manager,
-        args: agent_args,
-    })
-}
-
 fn parse_list_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
     let mut json = false;
 
@@ -566,17 +507,6 @@ fn parse_watch_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     })
 }
 
-fn parse_parallel_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
-    let mut scripts = Vec::new();
-
-    while *i < args.len() && !args[*i].starts_with('-') {
-        scripts.push(args[*i].clone());
-        *i += 1;
-    }
-
-    Ok(Commands::Parallel { scripts })
-}
-
 fn parse_clean_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
     let mut cache = false;
     let mut all = false;
@@ -601,16 +531,4 @@ fn parse_clean_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     }
 
     Ok(Commands::Clean { cache, all, global })
-}
-
-fn parse_completion_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
-    let shell = if *i < args.len() {
-        let s = args[*i].clone();
-        *i += 1;
-        Some(s)
-    } else {
-        None
-    };
-
-    Ok(Commands::Completion { shell })
 }
