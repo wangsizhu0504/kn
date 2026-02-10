@@ -1,7 +1,8 @@
+use anyhow::Result;
 use crate::parse::parse_ni;
 use crate::runner::{run_cli, DetectOptions};
 
-pub fn handle(force: bool, no_optional: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle(force: bool, no_optional: bool) -> Result<()> {
     let mut args = Vec::new();
 
     if force {

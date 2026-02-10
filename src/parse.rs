@@ -13,110 +13,39 @@ pub fn parse_ni(
     // Handle frozen install flag
     if let Some(index) = cmd_args.iter().position(|arg| arg == "--frozen") {
         cmd_args.remove(index);
-        return match agent {
-            Agent::Npm => ("npm".to_string(), vec!["ci".to_string()]),
-            Agent::Yarn => (
-                "yarn".to_string(),
-                vec!["install".to_string(), "--frozen-lockfile".to_string()],
-            ),
-            Agent::YarnBerry => (
-                "yarn".to_string(),
-                vec!["install".to_string(), "--immutable".to_string()],
-            ),
-            Agent::Pnpm => (
-                "pnpm".to_string(),
-                vec!["install".to_string(), "--frozen-lockfile".to_string()],
-            ),
-            Agent::Pnpm6 => (
-                "pnpm".to_string(),
-                vec!["install".to_string(), "--frozen-lockfile".to_string()],
-            ),
-            Agent::Bun => (
-                "bun".to_string(),
-                vec!["install".to_string(), "--no-save".to_string()],
-            ),
-        };
+        let frozen = agent.frozen_args();
+        return (
+            agent.name().to_string(),
+            frozen.into_iter().map(|s| s.to_string()).collect(),
+        );
     }
 
-    // Check if global install
+    // Handle global install
     if cmd_args.contains(&"-g".to_string()) {
-        return match agent {
-            Agent::Npm => {
-                let mut args = vec!["install".to_string()];
-                args.extend(cmd_args);
-                ("npm".to_string(), args)
-            }
-            Agent::Yarn => {
-                let mut args = vec!["global".to_string(), "add".to_string()];
-                args.extend_from_slice(&cmd_args[1..]);
-                ("yarn".to_string(), args)
-            }
-            Agent::YarnBerry => {
-                let mut args = vec!["global".to_string(), "add".to_string()];
-                args.extend_from_slice(&cmd_args[1..]);
-                ("yarn".to_string(), args)
-            }
-            Agent::Pnpm => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Pnpm6 => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Bun => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("bun".to_string(), args)
-            }
-        };
+        if agent.uses_global_prefix() {
+            // yarn global add <packages> (remove -g from args)
+            let filtered: Vec<String> = cmd_args
+                .into_iter()
+                .filter(|a| a != "-g" && a != "--global")
+                .collect();
+            let mut result = vec!["global".to_string(), agent.add_cmd().to_string()];
+            result.extend(filtered);
+            return (agent.name().to_string(), result);
+        } else {
+            // npm install -g <packages> / pnpm add -g / bun add -g
+            let mut result = vec![agent.add_cmd().to_string()];
+            result.extend(cmd_args);
+            return (agent.name().to_string(), result);
+        }
     }
 
-    // Regular install (add packages)
+    // Regular install
     if cmd_args.is_empty() {
-        match agent {
-            Agent::Npm => ("npm".to_string(), vec!["install".to_string()]),
-            Agent::Yarn => ("yarn".to_string(), vec!["install".to_string()]),
-            Agent::YarnBerry => ("yarn".to_string(), vec!["install".to_string()]),
-            Agent::Pnpm => ("pnpm".to_string(), vec!["install".to_string()]),
-            Agent::Pnpm6 => ("pnpm".to_string(), vec!["install".to_string()]),
-            Agent::Bun => ("bun".to_string(), vec!["install".to_string()]),
-        }
+        (agent.name().to_string(), vec!["install".to_string()])
     } else {
-        match agent {
-            Agent::Npm => {
-                let mut args = vec!["install".to_string()];
-                args.extend(cmd_args);
-                ("npm".to_string(), args)
-            }
-            Agent::Yarn => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::YarnBerry => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::Pnpm => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Pnpm6 => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Bun => {
-                let mut args = vec!["add".to_string()];
-                args.extend(cmd_args);
-                ("bun".to_string(), args)
-            }
-        }
+        let mut result = vec![agent.add_cmd().to_string()];
+        result.extend(cmd_args);
+        (agent.name().to_string(), result)
     }
 }
 
@@ -129,74 +58,26 @@ pub fn parse_nun(
 ) -> (String, Vec<String>) {
     let cmd_args = args;
 
-    // Check if global uninstall
+    // Handle global uninstall
     if cmd_args.contains(&"-g".to_string()) {
-        return match agent {
-            Agent::Npm => {
-                let mut args = vec!["uninstall".to_string()];
-                args.extend(cmd_args);
-                ("npm".to_string(), args)
-            }
-            Agent::Yarn => {
-                let mut args = vec!["global".to_string(), "remove".to_string()];
-                args.extend_from_slice(&cmd_args[1..]);
-                ("yarn".to_string(), args)
-            }
-            Agent::YarnBerry => {
-                let mut args = vec!["global".to_string(), "remove".to_string()];
-                args.extend_from_slice(&cmd_args[1..]);
-                ("yarn".to_string(), args)
-            }
-            Agent::Pnpm => {
-                let mut args = vec!["remove".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Pnpm6 => {
-                let mut args = vec!["remove".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Bun => {
-                let mut args = vec!["remove".to_string()];
-                args.extend(cmd_args);
-                ("bun".to_string(), args)
-            }
-        };
+        if agent.uses_global_prefix() {
+            let filtered: Vec<String> = cmd_args
+                .into_iter()
+                .filter(|a| a != "-g" && a != "--global")
+                .collect();
+            let mut result = vec!["global".to_string(), agent.remove_cmd().to_string()];
+            result.extend(filtered);
+            return (agent.name().to_string(), result);
+        } else {
+            let mut result = vec![agent.remove_cmd().to_string()];
+            result.extend(cmd_args);
+            return (agent.name().to_string(), result);
+        }
     }
 
-    match agent {
-        Agent::Npm => {
-            let mut args = vec!["uninstall".to_string()];
-            args.extend(cmd_args);
-            ("npm".to_string(), args)
-        }
-        Agent::Yarn => {
-            let mut args = vec!["remove".to_string()];
-            args.extend(cmd_args);
-            ("yarn".to_string(), args)
-        }
-        Agent::YarnBerry => {
-            let mut args = vec!["remove".to_string()];
-            args.extend(cmd_args);
-            ("yarn".to_string(), args)
-        }
-        Agent::Pnpm => {
-            let mut args = vec!["remove".to_string()];
-            args.extend(cmd_args);
-            ("pnpm".to_string(), args)
-        }
-        Agent::Pnpm6 => {
-            let mut args = vec!["remove".to_string()];
-            args.extend(cmd_args);
-            ("pnpm".to_string(), args)
-        }
-        Agent::Bun => {
-            let mut args = vec!["remove".to_string()];
-            args.extend(cmd_args);
-            ("bun".to_string(), args)
-        }
-    }
+    let mut result = vec![agent.remove_cmd().to_string()];
+    result.extend(cmd_args);
+    (agent.name().to_string(), result)
 }
 
 /// Parse function for execute commands (nlx)
@@ -207,33 +88,15 @@ pub fn parse_nlx(
     _ctx: Option<RunnerContext>,
 ) -> (String, Vec<String>) {
     if args.is_empty() {
-        eprintln!("Error: No command provided for execution");
-        std::process::exit(1);
+        return (agent.exec_binary().to_string(), args);
     }
 
-    match agent {
-        Agent::Npm => ("npx".to_string(), args),
-        Agent::Yarn => {
-            let mut dlx_args = vec!["dlx".to_string()];
-            dlx_args.extend(args);
-            ("yarn".to_string(), dlx_args)
-        }
-        Agent::YarnBerry => {
-            let mut dlx_args = vec!["dlx".to_string()];
-            dlx_args.extend(args);
-            ("yarn".to_string(), dlx_args)
-        }
-        Agent::Pnpm => {
-            let mut dlx_args = vec!["dlx".to_string()];
-            dlx_args.extend(args);
-            ("pnpm".to_string(), dlx_args)
-        }
-        Agent::Pnpm6 => {
-            let mut dlx_args = vec!["dlx".to_string()];
-            dlx_args.extend(args);
-            ("pnpm".to_string(), dlx_args)
-        }
-        Agent::Bun => ("bunx".to_string(), args),
+    if agent.exec_uses_dlx() {
+        let mut dlx_args = vec!["dlx".to_string()];
+        dlx_args.extend(args);
+        (agent.name().to_string(), dlx_args)
+    } else {
+        (agent.exec_binary().to_string(), args)
     }
 }
 
@@ -252,82 +115,26 @@ pub fn parse_nu(
         .position(|arg| arg == "-i" || arg == "--interactive")
     {
         cmd_args.remove(index);
-        return match agent {
-            Agent::Npm => {
-                eprintln!("Error: npm does not support interactive upgrades");
-                std::process::exit(1);
-            }
-            Agent::Yarn => {
-                let mut args = vec!["upgrade-interactive".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::YarnBerry => {
-                let mut args = vec!["up".to_string(), "-i".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::Pnpm => {
-                let mut args = vec!["update".to_string(), "-i".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Pnpm6 => {
-                let mut args = vec!["update".to_string(), "-i".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Bun => {
-                eprintln!("Error: bun does not support interactive upgrades");
-                std::process::exit(1);
-            }
-        };
+
+        if !agent.supports_interactive_upgrade() {
+            eprintln!(
+                "{} {} does not support interactive upgrades",
+                console::style("✗ Error:").red().bold(),
+                agent
+            );
+            std::process::exit(1);
+        }
+
+        let base = agent.interactive_upgrade_args();
+        let mut result: Vec<String> = base.into_iter().map(|s| s.to_string()).collect();
+        result.extend(cmd_args);
+        return (agent.name().to_string(), result);
     }
 
     // Regular upgrade
-    if cmd_args.is_empty() {
-        match agent {
-            Agent::Npm => ("npm".to_string(), vec!["update".to_string()]),
-            Agent::Yarn => ("yarn".to_string(), vec!["upgrade".to_string()]),
-            Agent::YarnBerry => ("yarn".to_string(), vec!["up".to_string()]),
-            Agent::Pnpm => ("pnpm".to_string(), vec!["update".to_string()]),
-            Agent::Pnpm6 => ("pnpm".to_string(), vec!["update".to_string()]),
-            Agent::Bun => ("bun".to_string(), vec!["update".to_string()]),
-        }
-    } else {
-        match agent {
-            Agent::Npm => {
-                let mut args = vec!["update".to_string()];
-                args.extend(cmd_args);
-                ("npm".to_string(), args)
-            }
-            Agent::Yarn => {
-                let mut args = vec!["upgrade".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::YarnBerry => {
-                let mut args = vec!["up".to_string()];
-                args.extend(cmd_args);
-                ("yarn".to_string(), args)
-            }
-            Agent::Pnpm => {
-                let mut args = vec!["update".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Pnpm6 => {
-                let mut args = vec!["update".to_string()];
-                args.extend(cmd_args);
-                ("pnpm".to_string(), args)
-            }
-            Agent::Bun => {
-                let mut args = vec!["update".to_string()];
-                args.extend(cmd_args);
-                ("bun".to_string(), args)
-            }
-        }
-    }
+    let mut result = vec![agent.upgrade_cmd().to_string()];
+    result.extend(cmd_args);
+    (agent.name().to_string(), result)
 }
 
 #[cfg(test)]

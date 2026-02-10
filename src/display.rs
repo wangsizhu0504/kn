@@ -1,23 +1,12 @@
-use console::{style, Emoji, Term};
+use console::{style, Term};
 use indicatif::{ProgressBar, ProgressStyle};
-use termimad::crossterm::style::Color;
-use termimad::{Alignment, MadSkin};
 
-// Emoji constants
-static PACKAGE: Emoji<'_, '_> = Emoji("📦  ", "[PKG] ");
-static INFO: Emoji<'_, '_> = Emoji("ℹ️  ", "[INFO] ");
-static WARNING: Emoji<'_, '_> = Emoji("⚠️  ", "[WARN] ");
-static ERROR: Emoji<'_, '_> = Emoji("❌  ", "[ERR] ");
-
-// ASCII art for KN
-const KN_ASCII: &str = r#"
- ██╗  ██╗███╗   ██╗
- ██║ ██╔╝████╗  ██║
- █████╔╝ ██╔██╗ ██║
- ██╔═██╗ ██║╚██╗██║
- ██║  ██╗██║ ╚████║
- ╚═╝  ╚═╝╚═╝  ╚═══╝
-"#;
+// ── ASCII Art Logo (lightweight line characters) ──
+const LOGO: &[&str] = &[
+    "╦╔═ ╔╗╔",
+    "╠╩╗ ║║║",
+    "╩ ╩ ╝╚╝",
+];
 
 pub struct StyledOutput;
 
@@ -33,140 +22,343 @@ impl Drop for Spinner {
     }
 }
 
+fn term_width() -> usize {
+    let term = Term::stdout();
+    (term.size().1 as usize).min(60)
+}
+
 impl StyledOutput {
-    pub fn header(text: &str) {
-        let term = Term::stdout();
-        let width = term.size().1 as usize;
-        println!("\n{}", style(text).bold().cyan());
-        println!("{}", style("─".repeat(width.min(80))).dim());
-    }
+    // ════════════════════════════════════════════════
+    //  Status messages
+    // ════════════════════════════════════════════════
 
     pub fn error(text: &str) {
-        eprintln!("{}{}", ERROR, style(text).red().bold());
+        eprintln!(
+            "  {} {}",
+            style("✖").red().bold(),
+            style(text).red(),
+        );
     }
 
+    #[allow(dead_code)]
     pub fn warning(text: &str) {
-        println!("{}{}", WARNING, style(text).yellow());
+        eprintln!(
+            "  {} {}",
+            style("⚠").yellow().bold(),
+            style(text).yellow(),
+        );
     }
 
     pub fn info(text: &str) {
-        println!("{}{}", INFO, style(text).cyan());
+        println!("  {} {}", style("ℹ").cyan(), text);
     }
 
-    pub fn package_info(name: &str, version: &str, manager: &str) {
+    pub fn success(text: &str) {
+        println!("  {} {}", style("✔").green(), text);
+    }
+
+    pub fn dim(text: &str) {
+        println!("  {}", style(text).dim());
+    }
+
+    pub fn hint(text: &str) {
         println!(
-            "{}{} {} {}",
-            PACKAGE,
-            style(name).bold(),
-            style(version).dim(),
-            style(format!("({})", manager)).dim()
+            "  {} {}",
+            style("›").dim(),
+            style(text).dim(),
         );
     }
+
+    // ════════════════════════════════════════════════
+    //  Titled section (▸ prefix header + indented body)
+    //
+    //  ▸ Title text
+    //
+    //    Body line 1
+    //    Body line 2
+    //
+    // ════════════════════════════════════════════════
+
+    /// Section header with ▸ arrow prefix
+    pub fn titled(title: &str) {
+        println!(
+            "  {} {}",
+            style("▸").cyan().bold(),
+            style(title).bold(),
+        );
+    }
+
+    /// Indented body line (4 spaces)
+    pub fn body(text: &str) {
+        if text.is_empty() {
+            println!();
+        } else {
+            println!("    {}", text);
+        }
+    }
+
+    // ════════════════════════════════════════════════
+    //  Section / Separator
+    // ════════════════════════════════════════════════
+
+    pub fn header(text: &str) {
+        println!();
+        println!("  {}", style(text).bold());
+    }
+
+    #[allow(dead_code)]
+    pub fn section(text: &str) {
+        println!();
+        println!("  {}", style(text).bold().dim());
+    }
+
+    pub fn separator() {
+        println!("  {}", style("─".repeat(term_width())).dim());
+    }
+
+    pub fn separator_with_label(label: &str) {
+        let width = term_width();
+        let label_str = format!(" {} ", label);
+        let remaining = width.saturating_sub(label_str.len() + 2);
+        println!(
+            "  {}{}{}",
+            style("─".repeat(2)).dim(),
+            style(&label_str).dim(),
+            style("─".repeat(remaining)).dim(),
+        );
+    }
+
+    // ════════════════════════════════════════════════
+    //  Key-value pairs
+    // ════════════════════════════════════════════════
+
+    pub fn kv(key: &str, value: &str) {
+        Self::kv_width(key, value, 18);
+    }
+
+    pub fn kv_width(key: &str, value: &str, width: usize) {
+        let label = format!("{}:", key);
+        println!(
+            "  {:<width$} {}",
+            style(&label).bold().dim(),
+            value,
+            width = width + 1,
+        );
+    }
+
+    /// Format as a string for embedding in body lines
+    pub fn kv_line(key: &str, value: &str, width: usize) -> String {
+        let label = format!("{}:", key);
+        format!(
+            "{:<width$} {}",
+            style(&label).dim(),
+            value,
+            width = width + 1,
+        )
+    }
+
+    // ════════════════════════════════════════════════
+    //  Tree rendering
+    // ════════════════════════════════════════════════
+
+    pub fn tree_item(text: &str, is_last: bool) {
+        let connector = if is_last { "└" } else { "├" };
+        println!("  {} {}", style(connector).dim(), text);
+    }
+
+    // ════════════════════════════════════════════════
+    //  Spinner
+    // ════════════════════════════════════════════════
 
     pub fn working(text: &str) -> Spinner {
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
                 .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
-                .template("{spinner:.cyan} {msg}")
+                .template("  {spinner:.cyan} {msg}")
                 .unwrap(),
         );
         pb.set_message(text.to_string());
         pb.enable_steady_tick(std::time::Duration::from_millis(80));
-
         Spinner { pb: Some(pb) }
     }
 
+    // ════════════════════════════════════════════════
+    //  Completion
+    // ════════════════════════════════════════════════
+
+    pub fn completion(duration_secs: f64) {
+        println!(
+            "\n  {} {}",
+            style("✔").green(),
+            style(format!("Done in {:.2}s", duration_secs)).dim(),
+        );
+    }
+
+    // ════════════════════════════════════════════════
+    //  Brand / Version (ASCII Art Logo)
+    // ════════════════════════════════════════════════
+
+    pub fn brand() {
+        let version = env!("CARGO_PKG_VERSION");
+        println!();
+        for (i, line) in LOGO.iter().enumerate() {
+            if i == 1 {
+                // version on the middle line
+                println!(
+                    "  {}   {}",
+                    style(line).cyan().bold(),
+                    style(format!("v{}", version)).dim(),
+                );
+            } else {
+                println!("  {}", style(line).cyan().bold());
+            }
+        }
+        println!();
+    }
+
+    // ════════════════════════════════════════════════
+    //  Help page
+    // ════════════════════════════════════════════════
+
     pub fn opencode_header() {
-        Self::kn_help_header();
+        Self::print_help();
     }
 
-    pub fn kn_help_header() {
-        // 使用 Markdown 构建帮助信息
-        let mut md = String::new();
+    pub fn print_help() {
+        let version = env!("CARGO_PKG_VERSION");
 
-        md.push_str("```\n");
-        md.push_str(KN_ASCII);
-        md.push_str("```\n\n");
+        println!();
+        for (i, line) in LOGO.iter().enumerate() {
+            if i == 1 {
+                println!(
+                    "  {}   {}",
+                    style(line).cyan().bold(),
+                    style(format!("v{}", version)).dim(),
+                );
+            } else {
+                println!("  {}", style(line).cyan().bold());
+            }
+        }
+        println!(
+            "  {}",
+            style("Minimal, blazing fast Node.js package manager runner").dim(),
+        );
+        println!();
 
-        md.push_str("Minimal, blazing fast Node.js package manager and scripts runner\n\n");
+        // ── Package Management ──
+        println!("  {}", style("Package Management").bold());
+        println!();
+        Self::help_cmd("install", "i, add", "Install packages");
+        Self::help_cmd("uninstall", "rm, remove", "Remove packages");
+        Self::help_cmd("upgrade", "up, update", "Upgrade dependencies");
+        Self::help_cmd("clean-install", "ci", "Clean install (frozen lockfile)");
+        println!();
 
-        md.push_str("### 📚 Available Commands\n\n");
+        // ── Scripts ──
+        println!("  {}", style("Scripts").bold());
+        println!();
+        Self::help_cmd("run", "r", "Run scripts from package.json");
+        Self::help_cmd("list", "ls", "List available scripts");
+        Self::help_cmd("watch", "w", "Watch files and re-run script");
+        Self::help_cmd("execute", "x, exec", "Execute package binaries");
+        println!();
 
-        md.push_str("```\n");
-        md.push_str("  install (i, add)        Install packages (auto-detects package manager)\n");
-        md.push_str("  run (r)                 Run npm scripts from package.json\n");
-        md.push_str("  uninstall (remove, rm)  Uninstall packages\n");
-        md.push_str("  execute (exec, x)       Execute package binaries\n");
-        md.push_str("  upgrade (update, up)    Upgrade dependencies\n");
-        md.push_str("  upgrade-self            Upgrade kn to the latest version\n");
-        md.push_str("  clean-install (ci)      Clean install dependencies (frozen lockfile)\n");
-        md.push_str("  list (ls)               Show available package scripts\n");
-        md.push_str("  info (env)              Show package manager and environment information\n");
-        md.push_str("  watch (w)               Watch files and re-run script on changes\n");
-        md.push_str("  clean                   Clean node_modules, cache, etc.\n");
-        md.push_str("  size                    Analyze package sizes\n");
-        md.push_str("  help                    Show this help message\n");
-        md.push_str("```\n");
+        // ── Project ──
+        println!("  {}", style("Project").bold());
+        println!();
+        Self::help_cmd("info", "env", "Show environment information");
+        Self::help_cmd("view", "", "View package info from registry");
+        Self::help_cmd("clean", "", "Clean node_modules, cache, etc.");
+        println!();
 
-        md.push_str("\n### 💡 Examples\n\n");
-        md.push_str("* `kn i react` - Install react\n");
-        md.push_str("* `kn i -D typescript` - Install typescript as dev dependency\n");
-        md.push_str("* `kn r dev` - Run dev script\n");
-        md.push_str("* `kn ls` - List available scripts\n");
-        md.push_str("* `kn up` - Upgrade dependencies\n\n");
+        // ── Other ──
+        println!("  {}", style("Other").bold());
+        println!();
+        Self::help_cmd("upgrade-self", "", "Upgrade kn to latest version");
+        Self::help_cmd("help", "-h", "Show this help");
+        Self::help_cmd("--version", "-v", "Show version number");
+        println!();
 
-        md.push_str("> *For more info:* `kn <command> --help`\n");
+        // ── Examples ──
+        Self::separator_with_label("Examples");
+        println!();
+        Self::help_example("kn i react", "Install a package");
+        Self::help_example("kn i -D typescript", "Install as devDependency");
+        Self::help_example("kn r dev", "Run dev script");
+        Self::help_example("kn ls", "List all scripts");
+        Self::help_example("kn up -i", "Interactive upgrade");
+        Self::help_example("kn view react", "View package details");
+        println!();
 
-        let mut skin = MadSkin::default();
-        skin.set_headers_fg(Color::Cyan);
-        skin.bold.set_fg(Color::Yellow);
-        skin.paragraph.set_fg(Color::White);
-
-        skin.print_text(&md);
+        Self::dim("Run kn <command> --help for more information.");
+        println!();
     }
 
-    pub fn enhanced_list_scripts(
+    fn help_cmd(name: &str, aliases: &str, desc: &str) {
+        if aliases.is_empty() {
+            println!(
+                "    {:<26} {}",
+                style(name).cyan(),
+                style(desc).dim(),
+            );
+        } else {
+            let combined = format!("{}, {}", name, aliases);
+            println!(
+                "    {:<26} {}",
+                style(&combined).cyan(),
+                style(desc).dim(),
+            );
+        }
+    }
+
+    fn help_example(cmd: &str, desc: &str) {
+        println!(
+            "    {}  {}",
+            style(format!("{:<24}", cmd)).green(),
+            style(desc).dim(),
+        );
+    }
+
+    // ════════════════════════════════════════════════
+    //  Script list
+    // ════════════════════════════════════════════════
+
+    pub fn list_scripts(
         package_name: &str,
         package_version: &str,
         scripts: &indexmap::IndexMap<String, String>,
     ) {
-        let mut md = String::new();
+        let max_key = scripts.keys().map(|k| k.len()).max().unwrap_or(10).min(20);
 
-        md.push_str(&format!(
-            "# 📦 {} **v{}**\n\n",
-            package_name, package_version
+        println!();
+        Self::titled(&format!(
+            "{} {}",
+            package_name,
+            style(format!("v{}", package_version)).dim(),
         ));
+        println!();
 
         if scripts.is_empty() {
-            md.push_str("> ℹ️  *No scripts found in this package*\n");
+            Self::body(&format!("{}", style("No scripts defined").dim()));
         } else {
-            md.push_str("### 📋 Available Scripts\n\n");
-            md.push_str("|-|-|\n");
-            md.push_str("|**Script**|**Command**|\n");
-            md.push_str("|-|-|\n");
-
             for (name, cmd) in scripts {
-                md.push_str(&format!("| **{}** | `{}` |\n", name, cmd));
+                let cmd_display = if cmd.len() > 50 {
+                    format!("{}…", &cmd[..49])
+                } else {
+                    cmd.clone()
+                };
+                Self::body(&format!(
+                    "{:<width$}  {}",
+                    style(name).cyan(),
+                    style(&cmd_display).dim(),
+                    width = max_key,
+                ));
             }
-            md.push_str("\n");
-            md.push_str(" > 💡 **Tip:** Run with `kn run <script-name>`\n");
         }
 
-        let mut skin = MadSkin::default();
-        skin.set_headers_fg(Color::Cyan);
-        skin.bold.set_fg(Color::Yellow);
-        skin.table.compound_style.set_fg(Color::DarkGrey);
-        skin.paragraph.set_fg(Color::White);
-        skin.table_border_chars = termimad::ROUNDED_TABLE_BORDER_CHARS;
-        skin.table.align = Alignment::Center;
-
-        skin.print_text(&md);
         println!();
-    }
-
-    #[allow(dead_code)]
-    pub fn key_value(key: &str, value: &str) {
-        println!("  {} {}", key, value);
+        Self::hint("kn r <name>");
+        println!();
     }
 }

@@ -1,4 +1,6 @@
-use crate::{agents::Agent, agents::AGENT_MAP, detect::detect, runner::DetectOptions};
+use crate::agents::Agent;
+use crate::detect::detect;
+use crate::runner::DetectOptions;
 use dirs::home_dir;
 use ini::Ini;
 use std::{
@@ -28,7 +30,7 @@ impl Default for Config {
 
 impl Config {
     pub fn assign(&self) -> Self {
-        let home = home_dir().unwrap_or(PathBuf::from("~/"));
+        let home = home_dir().unwrap_or_else(|| PathBuf::from("~/"));
         let custom_rc_path = env::var("KN_CONFIG_FILE");
         let default_rc_path = home.join(".knrc");
         let rc_path = if let Ok(custom_rc_path) = custom_rc_path {
@@ -40,26 +42,18 @@ impl Config {
         let mut config = Self::default();
 
         if Path::new(&rc_path).exists() {
-            let conf = Ini::load_from_file(&rc_path).unwrap();
-            let section = conf.section(None::<String>).unwrap();
-            let default_agent = section.get("default_agent");
-            let global_agent = section.get("global_agent");
-            if let Some(default_agent) = default_agent {
-                if let Some(agent) = AGENT_MAP
-                    .iter()
-                    .find(|(name, _)| *name == default_agent)
-                    .map(|(_, agent)| *agent)
-                {
-                    config.default_agent = DefaultAgent::Agent(agent);
-                }
-            }
-            if let Some(global_agent) = global_agent {
-                if let Some(agent) = AGENT_MAP
-                    .iter()
-                    .find(|(name, _)| *name == global_agent)
-                    .map(|(_, agent)| *agent)
-                {
-                    config.global_agent = agent;
+            if let Ok(conf) = Ini::load_from_file(&rc_path) {
+                if let Some(section) = conf.section(None::<String>) {
+                    if let Some(default_agent) = section.get("default_agent") {
+                        if let Some(agent) = Agent::from_name(default_agent) {
+                            config.default_agent = DefaultAgent::Agent(agent);
+                        }
+                    }
+                    if let Some(global_agent) = section.get("global_agent") {
+                        if let Some(agent) = Agent::from_name(global_agent) {
+                            config.global_agent = agent;
+                        }
+                    }
                 }
             }
         }

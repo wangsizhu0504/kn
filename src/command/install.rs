@@ -1,3 +1,4 @@
+use anyhow::Result;
 use crate::parse::parse_ni;
 use crate::runner::run_cli;
 
@@ -7,8 +8,8 @@ pub fn handle(
     global: bool,
     exact: bool,
     ignore_scripts: bool,
-) -> Result<(), Box<dyn std::error::Error>> {
-    let mut args = packages.clone();
+) -> Result<()> {
+    let mut args = packages;
 
     // Handle flags
     if global {
@@ -22,11 +23,9 @@ pub fn handle(
         }
     }
 
-    // Add ignore-scripts flag if specified
     if ignore_scripts {
         args.push("--ignore-scripts".to_string());
     }
 
-    // Simply pass through to package manager
     run_cli(parse_ni, None, args)
 }

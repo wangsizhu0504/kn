@@ -3,7 +3,6 @@ mod cli_parser;
 mod command;
 mod command_utils;
 mod config;
-mod config_schema;
 mod detect;
 mod display;
 mod parse;
@@ -11,7 +10,6 @@ mod runner;
 mod update_checker;
 mod utils;
 
-use anyhow::Result;
 use cli_parser::Cli;
 use tracing_subscriber::{fmt, EnvFilter};
 
@@ -33,13 +31,23 @@ fn init_logging() {
         .init();
 }
 
-fn main() -> Result<()> {
+fn main() {
     // 初始化日志系统
     init_logging();
 
     // Check for updates in the background (non-blocking)
     update_checker::check_for_updates();
 
-    let cli = Cli::parse().map_err(|e| anyhow::anyhow!("{}", e))?;
-    cli.execute().map_err(|e| anyhow::anyhow!("{}", e))
+    let cli = match Cli::parse() {
+        Ok(cli) => cli,
+        Err(e) => {
+            eprintln!("{}", e);
+            std::process::exit(1);
+        }
+    };
+
+    if let Err(e) = cli.execute() {
+        eprintln!("  {} {}", console::style("✖").red().bold(), e);
+        std::process::exit(1);
+    }
 }

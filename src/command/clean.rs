@@ -1,181 +1,186 @@
+use anyhow::Result;
+use console::style;
+
+use crate::agents::Agent;
 use crate::detect::detect;
+use crate::display::StyledOutput;
 use crate::runner::DetectOptions;
+use crate::utils::{dir_size, format_size};
 use std::fs;
 use std::process::Command;
 
-pub fn handle(cache: bool, all: bool, global: bool) -> Result<(), Box<dyn std::error::Error>> {
+pub fn handle(cache: bool, all: bool, global: bool) -> Result<()> {
     if all {
         clean_all()?;
     } else if cache {
-        clean_cache()?;
+        clean_cache(false)?;
     } else if global {
         clean_global()?;
     } else {
-        clean_local()?;
+        clean_local(false)?;
     }
 
     Ok(())
 }
 
-fn clean_local() -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n\x1b[33m🧹 Cleaning local project...\x1b[0m\n");
+fn detect_current_agent() -> Agent {
+    let options = DetectOptions {
+        cwd: std::env::current_dir().unwrap_or_default(),
+        ..Default::default()
+    };
+    detect(options).unwrap_or(Agent::Npm)
+}
 
-    let paths = vec![
-        "node_modules",
-        ".turbo",
-        ".next",
-        "dist",
-        "build",
-        ".vite",
-        ".nuxt",
+/// Clean local build artifacts. When `quiet`, skip output (used in clean_all).
+fn clean_local(quiet: bool) -> Result<(u32, u64)> {
+    let spinner = if !quiet {
+        Some(StyledOutput::working("Scanning local artifacts..."))
+    } else {
+        None
+    };
+
+    let paths = [
+        "node_modules", ".turbo", ".next", "dist", "build", ".vite", ".nuxt",
     ];
 
-    let mut removed = 0;
+    let mut removed = 0u32;
     let mut size_freed = 0u64;
+    let mut removed_names = Vec::new();
 
     for path in paths {
         if let Ok(metadata) = fs::metadata(path) {
             if metadata.is_dir() {
-                if let Ok(size) = dir_size(path) {
+                if let Ok(size) = dir_size(std::path::Path::new(path)) {
                     size_freed += size;
                 }
-
-                match fs::remove_dir_all(path) {
-                    Ok(_) => {
-                        println!("  \x1b[32m✓\x1b[0m Removed \x1b[36m{}\x1b[0m", path);
-                        removed += 1;
-                    }
-                    Err(e) => {
-                        println!("  \x1b[31m✗\x1b[0m Failed to remove {}: {}", path, e);
-                    }
+                if fs::remove_dir_all(path).is_ok() {
+                    removed += 1;
+                    removed_names.push(path);
                 }
             }
         }
     }
 
-    if removed > 0 {
-        println!(
-            "\n\x1b[32m✓\x1b[0m Cleaned {} directories, freed ~{} MB\n",
-            removed,
-            size_freed / 1024 / 1024
-        );
+    drop(spinner);
+
+    if !quiet {
+        if removed > 0 {
+            println!();
+            println!("  {}", style("Cleaned").bold());
+            for (i, name) in removed_names.iter().enumerate() {
+                let is_last = i == removed_names.len() - 1;
+                StyledOutput::tree_item(
+                    &format!(
+                        "{} {}",
+                        style(name).cyan(),
+                        style("removed").green(),
+                    ),
+                    is_last,
+                );
+            }
+            println!();
+            StyledOutput::success(&format!(
+                "Freed ~{}",
+                format_size(size_freed),
+            ));
+        } else {
+            StyledOutput::info("Nothing to clean");
+        }
+        println!();
+    }
+
+    Ok((removed, size_freed))
+}
+
+/// Clean package manager cache. When `quiet`, skip output.
+fn clean_cache(quiet: bool) -> Result<bool> {
+    let spinner = if !quiet {
+        Some(StyledOutput::working("Cleaning cache..."))
     } else {
-        println!("\n\x1b[90mNothing to clean\x1b[0m\n");
+        None
+    };
+
+    let agent = detect_current_agent();
+
+    drop(spinner);
+
+    if let Some((cmd, args)) = agent.cache_clean_args() {
+        let result = Command::new(cmd).args(&args).status();
+
+        match result {
+            Ok(status) if status.success() => {
+                if !quiet {
+                    StyledOutput::success(&format!("{} cache cleaned", agent));
+                    println!();
+                }
+                return Ok(true);
+            }
+            _ => {
+                if !quiet {
+                    StyledOutput::error(&format!("Failed to clean {} cache", agent));
+                    println!();
+                }
+            }
+        }
+    } else if !quiet {
+        StyledOutput::info(&format!("{} cache cleaning not supported", agent));
+        println!();
     }
 
-    Ok(())
+    Ok(false)
 }
 
-fn clean_cache() -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n\x1b[33m🧹 Cleaning package manager cache...\x1b[0m\n");
+fn clean_global() -> Result<()> {
+    StyledOutput::header("Global packages");
+    StyledOutput::dim("Listing global packages. Remove them manually if needed.");
+    println!();
 
-    let agent_option = detect(DetectOptions {
-        cwd: std::env::current_dir()?,
-        ..Default::default()
-    });
-
-    let agent = match agent_option {
-        Some(agent) => agent,
-        None => {
-            println!("  \x1b[90mCould not detect package manager\x1b[0m");
-            return Ok(());
-        }
-    };
-
-    let agent_str = format!("{:?}", agent).to_lowercase();
-
-    let result = match agent_str.as_str() {
-        "npm" | "npmbun" => Command::new("npm")
-            .args(&["cache", "clean", "--force"])
-            .status(),
-        "yarn" | "yarnberry" => Command::new("yarn").args(&["cache", "clean"]).status(),
-        "pnpm" => Command::new("pnpm").args(&["store", "prune"]).status(),
-        "bun" => {
-            // Bun doesn't have a cache clean command yet
-            println!("  \x1b[90mBun cache cleaning not supported yet\x1b[0m");
-            return Ok(());
-        }
-        _ => {
-            println!("  \x1b[90mUnknown package manager: {}\x1b[0m", agent_str);
-            return Ok(());
-        }
-    };
-
-    match result {
-        Ok(status) if status.success() => {
-            println!(
-                "\n\x1b[32m✓\x1b[0m {} cache cleaned successfully\n",
-                agent_str
-            );
-        }
-        _ => {
-            println!("\n\x1b[31m✗\x1b[0m Failed to clean {} cache\n", agent_str);
-        }
-    }
-
-    Ok(())
-}
-
-fn clean_global() -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n\x1b[33m🧹 Cleaning global packages...\x1b[0m\n");
-    println!("\x1b[90mThis will list global packages. Remove them manually if needed.\x1b[0m\n");
-
-    let agent_option = detect(DetectOptions {
-        cwd: std::env::current_dir()?,
-        ..Default::default()
-    });
-
-    let agent = match agent_option {
-        Some(agent) => agent,
-        None => {
-            println!("  \x1b[90mCould not detect package manager\x1b[0m");
-            return Ok(());
-        }
-    };
-
-    let agent_str = format!("{:?}", agent).to_lowercase();
-
-    let _ = match agent_str.as_str() {
-        "npm" | "npmbun" => Command::new("npm")
-            .args(&["list", "-g", "--depth=0"])
-            .status(),
-        "yarn" | "yarnberry" => Command::new("yarn").args(&["global", "list"]).status(),
-        "pnpm" => Command::new("pnpm").args(&["list", "-g"]).status(),
-        "bun" => Command::new("bun").args(&["pm", "ls", "-g"]).status(),
-        _ => return Ok(()),
-    };
+    let agent = detect_current_agent();
+    let (cmd, args) = agent.global_list_args();
+    let _ = Command::new(cmd).args(&args).status();
 
     println!();
     Ok(())
 }
 
-fn clean_all() -> Result<(), Box<dyn std::error::Error>> {
-    println!("\n\x1b[33m🧹 Deep cleaning...\x1b[0m\n");
+fn clean_all() -> Result<()> {
+    let spinner = StyledOutput::working("Running deep clean...");
 
-    clean_local()?;
-    clean_cache()?;
+    let (removed, size_freed) = clean_local(true)?;
+    let cache_ok = clean_cache(true)?;
 
-    println!("\x1b[32m✓\x1b[0m Deep clean completed\n");
+    drop(spinner);
 
-    Ok(())
-}
+    // ── Summary card ──
+    let mut lines = Vec::new();
 
-fn dir_size(path: &str) -> Result<u64, std::io::Error> {
-    let mut size = 0u64;
-
-    if let Ok(entries) = fs::read_dir(path) {
-        for entry in entries.flatten() {
-            if let Ok(metadata) = entry.metadata() {
-                if metadata.is_file() {
-                    size += metadata.len();
-                } else if metadata.is_dir() {
-                    if let Ok(subsize) = dir_size(&entry.path().to_string_lossy()) {
-                        size += subsize;
-                    }
-                }
-            }
-        }
+    if removed > 0 {
+        lines.push(format!(
+            "{} {} directories removed, ~{} freed",
+            style("✔").green(),
+            removed,
+            format_size(size_freed),
+        ));
     }
 
-    Ok(size)
+    if cache_ok {
+        lines.push(format!(
+            "{} Cache cleaned",
+            style("✔").green(),
+        ));
+    }
+
+    if removed == 0 && !cache_ok {
+        lines.push(format!("{}", style("Nothing to clean").dim()));
+    }
+
+    println!();
+    StyledOutput::titled("Deep Clean");
+    println!();
+    for line in &lines {
+        StyledOutput::body(line);
+    }
+    println!();
+
+    Ok(())
 }

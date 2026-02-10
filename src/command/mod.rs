@@ -6,7 +6,6 @@ pub mod info;
 pub mod install;
 pub mod list;
 pub mod run;
-pub mod size;
 pub mod uninstall;
 pub mod upgrade;
 pub mod upgrade_self;

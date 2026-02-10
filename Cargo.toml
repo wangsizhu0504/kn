@@ -31,7 +31,6 @@ indexmap = { version = "2.1.0", features = ["serde"] }
 console = "0.15"
 indicatif = "0.17"
 ureq = { version = "2.9", features = ["json"] }
-termimad = "0.34.1"
 
 [dev-dependencies]
 
@@ -43,16 +42,16 @@ winsafe = { version = "0.0.24", features = ["kernel"] }
 
 # 编译优化配置
 [profile.release]
-opt-level = 3           # 最高优化级别
-lto = "thin"            # 链接时优化
-codegen-units = 1       # 更好的优化
-strip = true            # 移除调试符号
-panic = "abort"         # 减小二进制大小
+opt-level = 3     # 最高优化级别
+lto = "thin"      # 链接时优化
+codegen-units = 1 # 更好的优化
+strip = true      # 移除调试符号
+panic = "abort"   # 减小二进制大小
 
 [profile.dev]
-opt-level = 0           # 快速编译
-debug = true            # 调试信息
+opt-level = 0 # 快速编译
+debug = true  # 调试信息
 
 # 优化依赖项编译速度
 [profile.dev.package."*"]
-opt-level = 2           # 依赖项使用中等优化
+opt-level = 2 # 依赖项使用中等优化

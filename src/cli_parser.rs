@@ -1,65 +1,15 @@
-// Custom CLI parser without external dependencies
+use console::style;
 use std::env;
 
-// Calculate Levenshtein distance for string similarity
-fn levenshtein_distance(s1: &str, s2: &str) -> usize {
-    let len1 = s1.chars().count();
-    let len2 = s2.chars().count();
-    let mut matrix = vec![vec![0; len2 + 1]; len1 + 1];
-
-    for i in 0..=len1 {
-        matrix[i][0] = i;
-    }
-    for j in 0..=len2 {
-        matrix[0][j] = j;
-    }
-
-    for (i, c1) in s1.chars().enumerate() {
-        for (j, c2) in s2.chars().enumerate() {
-            let cost = if c1 == c2 { 0 } else { 1 };
-            matrix[i + 1][j + 1] = std::cmp::min(
-                std::cmp::min(
-                    matrix[i][j + 1] + 1, // deletion
-                    matrix[i + 1][j] + 1, // insertion
-                ),
-                matrix[i][j] + cost, // substitution
-            );
-        }
-    }
-
-    matrix[len1][len2]
-}
+use crate::utils::levenshtein_distance;
 
 // Find similar commands based on user input
 fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
-    let all_commands = vec![
-        "install",
-        "i",
-        "add",
-        "run",
-        "r",
-        "uninstall",
-        "remove",
-        "rm",
-        "execute",
-        "exec",
-        "x",
-        "upgrade",
-        "update",
-        "up",
-        "upgrade-self",
-        "clean-install",
-        "ci",
-        "list",
-        "ls",
-        "info",
-        "env",
-        "watch",
-        "w",
-        "clean",
-        "size",
-        "view",
-        "help",
+    let all_commands = [
+        "install", "i", "add", "run", "r", "uninstall", "remove", "rm",
+        "execute", "exec", "x", "upgrade", "update", "up", "upgrade-self",
+        "clean-install", "ci", "list", "ls", "info", "env", "watch", "w",
+        "clean", "view", "help",
     ];
 
     let mut similarities: Vec<(String, usize)> = all_commands
@@ -67,10 +17,8 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
         .map(|&cmd| (cmd.to_string(), levenshtein_distance(input, cmd)))
         .collect();
 
-    // Sort by distance (smaller is more similar)
     similarities.sort_by_key(|(_, dist)| *dist);
 
-    // Return top 3 most similar commands with distance <= 3
     similarities
         .into_iter()
         .filter(|(_, dist)| *dist <= 3)
@@ -78,38 +26,48 @@ fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
         .collect()
 }
 
-// Format error message with suggestions
 fn format_unknown_command_error(input: &str) -> String {
     let similar = find_similar_commands(input);
 
     let mut error_msg = format!(
-        "\x1b[31m✗ Error:\x1b[0m Unknown command: \x1b[33m{}\x1b[0m\n",
-        input
+        "\n  {} {}\n",
+        style("✖").red().bold(),
+        style(format!("Unknown command: {}", input)).red(),
     );
 
     if !similar.is_empty() {
-        error_msg.push_str("\n\x1b[36m💡 Did you mean:\x1b[0m\n");
-        for (cmd, _) in similar {
-            error_msg.push_str(&format!("  \x1b[32m→\x1b[0m kn \x1b[36m{}\x1b[0m\n", cmd));
+        error_msg.push_str("\n  Did you mean:\n");
+        for (i, (cmd, _)) in similar.iter().enumerate() {
+            let is_last = i == similar.len() - 1;
+            let connector = if is_last { "└" } else { "├" };
+            error_msg.push_str(&format!(
+                "  {} kn {}\n",
+                style(connector).dim(),
+                style(cmd).cyan(),
+            ));
         }
     }
 
-    error_msg
-        .push_str("\n\x1b[90mRun \x1b[36mkn help\x1b[90m to see all available commands.\x1b[0m\n");
+    error_msg.push_str(&format!(
+        "\n  {} {}\n",
+        style("›").dim(),
+        style("Run kn help to see all available commands").dim(),
+    ));
 
     error_msg
 }
 
-// Format general error message
 fn format_error(message: &str) -> String {
-    format!("\x1b[31m✗ Error:\x1b[0m {}", message)
+    format!("  {} {}", style("✖").red().bold(), style(message).red())
 }
 
-// Format error with suggestion
 fn format_error_with_suggestion(message: &str, suggestion: &str) -> String {
     format!(
-        "\x1b[31m✗ Error:\x1b[0m {}\n\x1b[36m💡 Suggestion:\x1b[0m {}",
-        message, suggestion
+        "  {} {}\n  {} {}",
+        style("✖").red().bold(),
+        style(message).red(),
+        style("└").dim(),
+        style(suggestion).dim(),
     )
 }
 
@@ -166,8 +124,12 @@ pub enum Commands {
         all: bool,
         global: bool,
     },
-    Size,
+    View {
+        package: String,
+        version: Option<String>,
+    },
     Help,
+    Version,
 }
 
 impl Cli {
@@ -245,12 +207,12 @@ impl Cli {
                 i += 1;
                 parse_clean_command(&args, &mut i)?
             }
-            "size" => Commands::Size,
-            "help" | "--help" | "-h" => Commands::Help,
-            "--version" | "-v" => {
-                println!("kn version {}", env!("CARGO_PKG_VERSION"));
-                std::process::exit(0);
+            "view" => {
+                i += 1;
+                parse_view_command(&args, &mut i)?
             }
+            "help" | "--help" | "-h" => Commands::Help,
+            "--version" | "-v" | "-V" => Commands::Version,
             _ => return Err(format_unknown_command_error(&args[i])),
         };
 
@@ -531,4 +493,26 @@ fn parse_clean_command(args: &[String], i: &mut usize) -> Result<Commands, Strin
     }
 
     Ok(Commands::Clean { cache, all, global })
+}
+
+fn parse_view_command(args: &[String], i: &mut usize) -> Result<Commands, String> {
+    if *i >= args.len() {
+        return Err(format_error_with_suggestion(
+            "View command requires a package name",
+            "Usage: kn view <package> [version]",
+        ));
+    }
+
+    let package = args[*i].clone();
+    *i += 1;
+
+    let version = if *i < args.len() && !args[*i].starts_with('-') {
+        let v = Some(args[*i].clone());
+        *i += 1;
+        v
+    } else {
+        None
+    };
+
+    Ok(Commands::View { package, version })
 }

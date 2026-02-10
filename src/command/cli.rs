@@ -1,12 +1,13 @@
 use crate::cli_parser::{Cli, Commands};
 use crate::command::{
-    clean, clean_install, execute, info, install, list, run, size, uninstall, upgrade,
-    upgrade_self, watch,
+    clean, clean_install, execute, info, install, list, run, uninstall, upgrade,
+    upgrade_self, view, watch,
 };
 use crate::display::StyledOutput;
+use anyhow::Result;
 
 impl Cli {
-    pub fn execute(self) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn execute(self) -> Result<()> {
         // Handle working directory change
         if let Some(cwd) = self.cwd {
             std::env::set_current_dir(&cwd)?;
@@ -43,9 +44,13 @@ impl Cli {
                 patterns,
             } => watch::handle(script_name, patterns),
             Commands::Clean { cache, all, global } => clean::handle(cache, all, global),
-            Commands::Size => size::handle(),
+            Commands::View { package, version } => view::handle(package, version),
             Commands::Help => {
                 StyledOutput::opencode_header();
+                Ok(())
+            }
+            Commands::Version => {
+                StyledOutput::brand();
                 Ok(())
             }
         }
