@@ -9,6 +9,7 @@ mod parse;
 mod runner;
 mod update_checker;
 mod utils;
+mod version;
 
 use cli_parser::Cli;
 use tracing_subscriber::{fmt, EnvFilter};
@@ -36,7 +37,7 @@ fn main() {
     init_logging();
 
     // Check for updates in the background (non-blocking)
-    update_checker::check_for_updates();
+    let update_handle = update_checker::check_for_updates();
 
     let cli = match Cli::parse() {
         Ok(cli) => cli,
@@ -46,8 +47,19 @@ fn main() {
         }
     };
 
-    if let Err(e) = cli.execute() {
+    let exit_code = if let Err(e) = cli.execute() {
         eprintln!("  {} {}", console::style("✖").red().bold(), e);
-        std::process::exit(1);
+        1
+    } else {
+        0
+    };
+
+    // Print update notification after command output is done
+    if let Ok(Some(msg)) = update_handle.join() {
+        eprint!("{}", msg);
+    }
+
+    if exit_code != 0 {
+        std::process::exit(exit_code);
     }
 }

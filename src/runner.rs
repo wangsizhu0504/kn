@@ -80,7 +80,7 @@ pub fn run(
         return Ok(());
     }
     if args.len() == 1 && (args[0] == "-h" || args[0] == "--help") {
-        StyledOutput::opencode_header();
+        StyledOutput::print_help();
         return Ok(());
     }
 

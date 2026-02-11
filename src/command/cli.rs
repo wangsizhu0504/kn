@@ -46,7 +46,7 @@ impl Cli {
             Commands::Clean { cache, all, global } => clean::handle(cache, all, global),
             Commands::View { package, version } => view::handle(package, version),
             Commands::Help => {
-                StyledOutput::opencode_header();
+                StyledOutput::print_help();
                 Ok(())
             }
             Commands::Version => {

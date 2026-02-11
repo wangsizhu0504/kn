@@ -1,12 +1,30 @@
-use console::{style, Term};
+use console::{style, Color, Style, Term};
 use indicatif::{ProgressBar, ProgressStyle};
 
-// ── ASCII Art Logo (lightweight line characters) ──
-const LOGO: &[&str] = &[
-    "╦╔═ ╔╗╔",
-    "╠╩╗ ║║║",
-    "╩ ╩ ╝╚╝",
-];
+const DESCRIPTION: &str = "Minimal, blazing fast Node.js package manager runner";
+
+// Create a gradient effect for the logo
+fn gradient_text(text: &str) -> String {
+    let colors = [
+        Color::Color256(51),  // Cyan
+        Color::Color256(45),  // Bright Cyan
+        Color::Color256(39),  // Blue
+        Color::Color256(99),  // Purple
+    ];
+
+    let chars: Vec<char> = text.chars().collect();
+    let len = chars.len();
+
+    chars
+        .iter()
+        .enumerate()
+        .map(|(i, c)| {
+            let color_index = (i * (colors.len() - 1)) / len.max(1);
+            let color = colors[color_index.min(colors.len() - 1)];
+            format!("{}", Style::new().fg(color).bold().apply_to(c))
+        })
+        .collect::<String>()
+}
 
 pub struct StyledOutput;
 
@@ -202,18 +220,14 @@ impl StyledOutput {
     pub fn brand() {
         let version = env!("CARGO_PKG_VERSION");
         println!();
-        for (i, line) in LOGO.iter().enumerate() {
-            if i == 1 {
-                // version on the middle line
-                println!(
-                    "  {}   {}",
-                    style(line).cyan().bold(),
-                    style(format!("v{}", version)).dim(),
-                );
-            } else {
-                println!("  {}", style(line).cyan().bold());
-            }
-        }
+        println!(
+            "  {} {} {} {} {}",
+            style("⚡").color256(226).bold(),
+            gradient_text("kn"),
+            style(version).color256(99),
+            style("—").dim(),
+            style(DESCRIPTION).color256(208),
+        );
         println!();
     }
 
@@ -221,28 +235,17 @@ impl StyledOutput {
     //  Help page
     // ════════════════════════════════════════════════
 
-    pub fn opencode_header() {
-        Self::print_help();
-    }
-
     pub fn print_help() {
         let version = env!("CARGO_PKG_VERSION");
 
         println!();
-        for (i, line) in LOGO.iter().enumerate() {
-            if i == 1 {
-                println!(
-                    "  {}   {}",
-                    style(line).cyan().bold(),
-                    style(format!("v{}", version)).dim(),
-                );
-            } else {
-                println!("  {}", style(line).cyan().bold());
-            }
-        }
         println!(
-            "  {}",
-            style("Minimal, blazing fast Node.js package manager runner").dim(),
+            "  {} {} {} {} {}",
+            style("⚡").color256(226).bold(),
+            gradient_text("kn"),
+            style(version).color256(99),
+            style("—").dim(),
+            style(DESCRIPTION).color256(208),
         );
         println!();
 
