@@ -6,10 +6,32 @@ use crate::utils::levenshtein_distance;
 // Find similar commands based on user input
 fn find_similar_commands(input: &str) -> Vec<(String, usize)> {
     let all_commands = [
-        "install", "i", "add", "run", "r", "uninstall", "remove", "rm",
-        "execute", "exec", "x", "upgrade", "update", "up", "upgrade-self",
-        "clean-install", "ci", "list", "ls", "info", "env", "watch", "w",
-        "clean", "view", "help",
+        "install",
+        "i",
+        "add",
+        "run",
+        "r",
+        "uninstall",
+        "remove",
+        "rm",
+        "execute",
+        "exec",
+        "x",
+        "upgrade",
+        "update",
+        "up",
+        "upgrade-self",
+        "clean-install",
+        "ci",
+        "list",
+        "ls",
+        "info",
+        "env",
+        "watch",
+        "w",
+        "clean",
+        "view",
+        "help",
     ];
 
     let mut similarities: Vec<(String, usize)> = all_commands

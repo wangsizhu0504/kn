@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::display::StyledOutput;
 use crate::utils::find_and_parse_package_json;
+use anyhow::Result;
 
 pub fn handle(json: bool) -> Result<()> {
     let spinner = StyledOutput::working("Searching for package.json...");

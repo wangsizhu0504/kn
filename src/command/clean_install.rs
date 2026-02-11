@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::parse::parse_ni;
 use crate::runner::{run_cli, DetectOptions};
+use anyhow::Result;
 
 pub fn handle(force: bool, no_optional: bool) -> Result<()> {
     let mut args = Vec::new();

@@ -6,10 +6,10 @@ const DESCRIPTION: &str = "Minimal, blazing fast Node.js package manager runner"
 // Create a gradient effect for the logo
 fn gradient_text(text: &str) -> String {
     let colors = [
-        Color::Color256(51),  // Cyan
-        Color::Color256(45),  // Bright Cyan
-        Color::Color256(39),  // Blue
-        Color::Color256(99),  // Purple
+        Color::Color256(51), // Cyan
+        Color::Color256(45), // Bright Cyan
+        Color::Color256(39), // Blue
+        Color::Color256(99), // Purple
     ];
 
     let chars: Vec<char> = text.chars().collect();
@@ -51,20 +51,12 @@ impl StyledOutput {
     // ════════════════════════════════════════════════
 
     pub fn error(text: &str) {
-        eprintln!(
-            "  {} {}",
-            style("✖").red().bold(),
-            style(text).red(),
-        );
+        eprintln!("  {} {}", style("✖").red().bold(), style(text).red(),);
     }
 
     #[allow(dead_code)]
     pub fn warning(text: &str) {
-        eprintln!(
-            "  {} {}",
-            style("⚠").yellow().bold(),
-            style(text).yellow(),
-        );
+        eprintln!("  {} {}", style("⚠").yellow().bold(), style(text).yellow(),);
     }
 
     pub fn info(text: &str) {
@@ -80,11 +72,7 @@ impl StyledOutput {
     }
 
     pub fn hint(text: &str) {
-        println!(
-            "  {} {}",
-            style("›").dim(),
-            style(text).dim(),
-        );
+        println!("  {} {}", style("›").dim(), style(text).dim(),);
     }
 
     // ════════════════════════════════════════════════
@@ -99,11 +87,7 @@ impl StyledOutput {
 
     /// Section header with ▸ arrow prefix
     pub fn titled(title: &str) {
-        println!(
-            "  {} {}",
-            style("▸").cyan().bold(),
-            style(title).bold(),
-        );
+        println!("  {} {}", style("▸").cyan().bold(), style(title).bold(),);
     }
 
     /// Indented body line (4 spaces)
@@ -300,18 +284,10 @@ impl StyledOutput {
 
     fn help_cmd(name: &str, aliases: &str, desc: &str) {
         if aliases.is_empty() {
-            println!(
-                "    {:<26} {}",
-                style(name).cyan(),
-                style(desc).dim(),
-            );
+            println!("    {:<26} {}", style(name).cyan(), style(desc).dim(),);
         } else {
             let combined = format!("{}, {}", name, aliases);
-            println!(
-                "    {:<26} {}",
-                style(&combined).cyan(),
-                style(desc).dim(),
-            );
+            println!("    {:<26} {}", style(&combined).cyan(), style(desc).dim(),);
         }
     }
 

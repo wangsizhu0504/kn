@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::parse::parse_ni;
 use crate::runner::run_cli;
+use anyhow::Result;
 
 pub fn handle(
     packages: Vec<String>,

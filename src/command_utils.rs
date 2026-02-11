@@ -19,8 +19,7 @@ pub struct Package {
 pub fn parse_package_json(path: &str) -> Result<Package> {
     use std::fs;
 
-    let contents = fs::read_to_string(path)
-        .with_context(|| format!("Failed to read {}", path))?;
+    let contents = fs::read_to_string(path).with_context(|| format!("Failed to read {}", path))?;
 
     let json: serde_json::Value = serde_json::from_str(&contents)
         .with_context(|| format!("Failed to parse JSON in {}", path))?;
@@ -58,10 +57,7 @@ pub fn detect_agent() -> Agent {
     detect(options).unwrap_or(Agent::Npm)
 }
 
-pub fn run_script_fast(
-    script_name: &str,
-    args: &[String],
-) -> Result<()> {
+pub fn run_script_fast(script_name: &str, args: &[String]) -> Result<()> {
     let cwd = env::current_dir().context("Failed to get current directory")?;
     let (package_json_path, package) = crate::utils::find_and_parse_package_json(&cwd)?;
 
@@ -70,9 +66,7 @@ pub fn run_script_fast(
         _ => bail!("No scripts found in package.json"),
     };
 
-    let package_path = package_json_path
-        .parent()
-        .unwrap_or_else(|| Path::new("."));
+    let package_path = package_json_path.parent().unwrap_or_else(|| Path::new("."));
 
     if let Some(script_command) = scripts.get(script_name) {
         let agent = detect_agent();
@@ -92,7 +86,10 @@ pub fn run_script_fast(
         let status = cmd
             .env("npm_lifecycle_event", script_name)
             .env("npm_lifecycle_script", script_command)
-            .env("npm_package_json", package_json_path.to_string_lossy().as_ref())
+            .env(
+                "npm_package_json",
+                package_json_path.to_string_lossy().as_ref(),
+            )
             .env("npm_execpath", env::current_exe().unwrap_or_default())
             .current_dir(package_path)
             .status()

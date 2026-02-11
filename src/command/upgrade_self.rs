@@ -74,11 +74,7 @@ pub fn handle() -> Result<()> {
     let spinner = StyledOutput::working(&format!("Downloading {}...", archive_name));
 
     let status = Command::new("curl")
-        .args([
-            "-fsSL", "-o",
-            archive_path.to_str().unwrap(),
-            &download_url,
-        ])
+        .args(["-fsSL", "-o", archive_path.to_str().unwrap(), &download_url])
         .stdout(Stdio::null())
         .stderr(Stdio::null())
         .status()?;
@@ -92,7 +88,8 @@ pub fn handle() -> Result<()> {
 
     let checksum_status = Command::new("curl")
         .args([
-            "-fsSL", "-o",
+            "-fsSL",
+            "-o",
             checksum_path.to_str().unwrap(),
             &checksum_url,
         ])
@@ -108,17 +105,12 @@ pub fn handle() -> Result<()> {
         bail!("Failed to download the checksum file");
     }
 
-    StyledOutput::tree_item(
-        &format!("{} Downloaded", style("✔").green()),
-        false,
-    );
+    StyledOutput::tree_item(&format!("{} Downloaded", style("✔").green()), false);
 
     // Step 2: Verify SHA-256 checksum
     let spinner = StyledOutput::working("Verifying checksum...");
 
-    let expected_checksum = fs::read_to_string(&checksum_path)?
-        .trim()
-        .to_lowercase();
+    let expected_checksum = fs::read_to_string(&checksum_path)?.trim().to_lowercase();
     // The .sha256 file may contain "hash  filename" or just "hash"
     let expected_hash = expected_checksum
         .split_whitespace()
@@ -150,10 +142,7 @@ pub fn handle() -> Result<()> {
         );
     }
 
-    StyledOutput::tree_item(
-        &format!("{} Verified", style("✔").green()),
-        false,
-    );
+    StyledOutput::tree_item(&format!("{} Verified", style("✔").green()), false);
 
     // Step 3: Extract
     let spinner = StyledOutput::working("Extracting...");
@@ -193,10 +182,7 @@ pub fn handle() -> Result<()> {
         StyledOutput::error("Extraction failed");
         bail!("Failed to extract the archive");
     }
-    StyledOutput::tree_item(
-        &format!("{} Extracted", style("✔").green()),
-        false,
-    );
+    StyledOutput::tree_item(&format!("{} Extracted", style("✔").green()), false);
 
     // Step 4: Install with backup & rollback
     let spinner = StyledOutput::working("Installing...");
@@ -244,10 +230,7 @@ pub fn handle() -> Result<()> {
 
     drop(spinner);
 
-    StyledOutput::tree_item(
-        &format!("{} Installed", style("✔").green()),
-        true,
-    );
+    StyledOutput::tree_item(&format!("{} Installed", style("✔").green()), true);
 
     // ── Success card ──
     println!();

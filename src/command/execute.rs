@@ -1,6 +1,6 @@
-use anyhow::Result;
 use crate::parse::parse_nlx;
 use crate::runner::run_cli;
+use anyhow::Result;
 
 pub fn handle(command: String, args: Vec<String>) -> Result<()> {
     let mut full_args = vec![command];

@@ -21,11 +21,7 @@ pub fn detect(options: crate::runner::DetectOptions) -> Option<Agent> {
         let json: serde_json::Value = match serde_json::from_str(&contents) {
             Ok(j) => j,
             Err(e) => {
-                warn!(
-                    "Failed to parse {}: {}",
-                    package_json_path.display(),
-                    e
-                );
+                warn!("Failed to parse {}: {}", package_json_path.display(), e);
                 return Some(Agent::Npm);
             }
         };

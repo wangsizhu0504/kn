@@ -1,7 +1,7 @@
 use crate::cli_parser::{Cli, Commands};
 use crate::command::{
-    clean, clean_install, execute, info, install, list, run, uninstall, upgrade,
-    upgrade_self, view, watch,
+    clean, clean_install, execute, info, install, list, run, uninstall, upgrade, upgrade_self,
+    view, watch,
 };
 use crate::display::StyledOutput;
 use anyhow::Result;

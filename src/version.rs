@@ -2,10 +2,8 @@ use anyhow::{Context, Result};
 use std::time::Duration;
 
 pub const CURRENT_VERSION: &str = env!("CARGO_PKG_VERSION");
-pub const GITHUB_API_URL: &str =
-    "https://api.github.com/repos/wangsizhu0504/kn/releases/latest";
-pub const GITHUB_RELEASE_URL: &str =
-    "https://github.com/wangsizhu0504/kn/releases/latest/download";
+pub const GITHUB_API_URL: &str = "https://api.github.com/repos/wangsizhu0504/kn/releases/latest";
+pub const GITHUB_RELEASE_URL: &str = "https://github.com/wangsizhu0504/kn/releases/latest/download";
 
 /// Fetch the latest release version from GitHub API.
 pub fn fetch_latest_version(timeout: Duration) -> Result<String> {

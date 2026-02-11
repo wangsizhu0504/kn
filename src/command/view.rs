@@ -189,7 +189,11 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
     let mut header_lines = vec![title, meta];
 
     // Description
-    if let Some(desc) = info.description.as_ref().or(registry_data.description.as_ref()) {
+    if let Some(desc) = info
+        .description
+        .as_ref()
+        .or(registry_data.description.as_ref())
+    {
         if !desc.is_empty() {
             header_lines.push(String::new());
             header_lines.push(format!("{}", style(desc).italic()));
@@ -209,7 +213,10 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
 
     // ── Links section ──
     let homepage = info.homepage.as_ref().or(registry_data.homepage.as_ref());
-    let repo = info.repository.as_ref().or(registry_data.repository.as_ref());
+    let repo = info
+        .repository
+        .as_ref()
+        .or(registry_data.repository.as_ref());
     let bugs = info.bugs.as_ref().or(registry_data.bugs.as_ref());
 
     if homepage.is_some() || repo.is_some() || bugs.is_some() {
@@ -261,7 +268,10 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
                 .collect();
             let mut display = kw_str.join(&format!("{}", style(", ").dim()));
             if keywords.len() > 8 {
-                display.push_str(&format!(" {}", style(format!("+{} more", keywords.len() - 8)).dim()));
+                display.push_str(&format!(
+                    " {}",
+                    style(format!("+{} more", keywords.len() - 8)).dim()
+                ));
             }
             StyledOutput::kv("Keywords", &display);
         }
@@ -323,7 +333,11 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
                     break;
                 }
                 let is_last = i == total - 1 || i == show_count - 1;
-                let connector = if is_last && i < show_count { "└" } else { "├" };
+                let connector = if is_last && i < show_count {
+                    "└"
+                } else {
+                    "├"
+                };
                 println!(
                     "  {} {} {}",
                     style(connector).dim(),
@@ -353,7 +367,11 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
     }
 
     // ── Maintainers ──
-    if let Some(maintainers) = info.maintainers.as_ref().or(registry_data.maintainers.as_ref()) {
+    if let Some(maintainers) = info
+        .maintainers
+        .as_ref()
+        .or(registry_data.maintainers.as_ref())
+    {
         if !maintainers.is_empty() {
             println!();
             println!("  {}", style("Maintainers").bold());
@@ -366,11 +384,7 @@ fn print_package_info(registry_data: &RegistryResponse, info: &PackageInfo) {
                 } else {
                     m.name.clone()
                 };
-                println!(
-                    "  {} {}",
-                    style(connector).dim(),
-                    name_str,
-                );
+                println!("  {} {}", style(connector).dim(), name_str,);
             }
         }
     }

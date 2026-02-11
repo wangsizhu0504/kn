@@ -40,7 +40,13 @@ fn clean_local(quiet: bool) -> Result<(u32, u64)> {
     };
 
     let paths = [
-        "node_modules", ".turbo", ".next", "dist", "build", ".vite", ".nuxt",
+        "node_modules",
+        ".turbo",
+        ".next",
+        "dist",
+        "build",
+        ".vite",
+        ".nuxt",
     ];
 
     let mut removed = 0u32;
@@ -70,19 +76,12 @@ fn clean_local(quiet: bool) -> Result<(u32, u64)> {
             for (i, name) in removed_names.iter().enumerate() {
                 let is_last = i == removed_names.len() - 1;
                 StyledOutput::tree_item(
-                    &format!(
-                        "{} {}",
-                        style(name).cyan(),
-                        style("removed").green(),
-                    ),
+                    &format!("{} {}", style(name).cyan(), style("removed").green(),),
                     is_last,
                 );
             }
             println!();
-            StyledOutput::success(&format!(
-                "Freed ~{}",
-                format_size(size_freed),
-            ));
+            StyledOutput::success(&format!("Freed ~{}", format_size(size_freed),));
         } else {
             StyledOutput::info("Nothing to clean");
         }
@@ -164,10 +163,7 @@ fn clean_all() -> Result<()> {
     }
 
     if cache_ok {
-        lines.push(format!(
-            "{} Cache cleaned",
-            style("✔").green(),
-        ));
+        lines.push(format!("{} Cache cleaned", style("✔").green(),));
     }
 
     if removed == 0 && !cache_ok {

@@ -1,8 +1,8 @@
 use anyhow::{Context, Result};
 use inquire::Select;
+use std::env;
 use std::path::{Path, PathBuf};
 use std::process::{self, Command, Stdio};
-use std::env;
 use tracing::{debug, info, warn};
 
 use crate::agents::Agent;
@@ -46,20 +46,12 @@ pub struct RunnerContext {
 pub type Runner =
     fn(agent: Agent, args: Vec<String>, ctx: Option<RunnerContext>) -> (String, Vec<String>);
 
-pub fn run_cli(
-    func: Runner,
-    options: Option<DetectOptions>,
-    args: Vec<String>,
-) -> Result<()> {
+pub fn run_cli(func: Runner, options: Option<DetectOptions>, args: Vec<String>) -> Result<()> {
     let mut options = options.unwrap_or_default();
     run(func, args, &mut options)
 }
 
-pub fn run(
-    func: Runner,
-    args: Vec<String>,
-    options: &mut DetectOptions,
-) -> Result<()> {
+pub fn run(func: Runner, args: Vec<String>, options: &mut DetectOptions) -> Result<()> {
     debug!("Running command with args: {:?}", args);
 
     let mut args = args;

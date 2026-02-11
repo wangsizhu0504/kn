@@ -6,11 +6,7 @@ use crate::command_utils::run_script_fast;
 use crate::display::StyledOutput;
 use crate::utils::{find_and_parse_package_json, levenshtein_distance};
 
-pub fn handle(
-    script_name: Option<String>,
-    args: Vec<String>,
-    _if_present: bool,
-) -> Result<()> {
+pub fn handle(script_name: Option<String>, args: Vec<String>, _if_present: bool) -> Result<()> {
     match script_name {
         Some(script) => {
             // Try fuzzy match if script not found
@@ -105,7 +101,12 @@ fn show_available_scripts() -> Result<()> {
             } else {
                 cmd.clone()
             };
-            format!("{:<width$}  {}", name, style(&cmd_preview).dim(), width = max_name)
+            format!(
+                "{:<width$}  {}",
+                name,
+                style(&cmd_preview).dim(),
+                width = max_name
+            )
         })
         .collect();
 

@@ -1,7 +1,7 @@
-use anyhow::Result;
-use console::style;
 use crate::command_utils::detect_agent;
 use crate::display::StyledOutput;
+use anyhow::Result;
+use console::style;
 use std::process;
 
 pub fn handle(verbose: bool) -> Result<()> {
@@ -37,7 +37,11 @@ pub fn handle(verbose: bool) -> Result<()> {
         lines.push(String::new());
 
         if let Ok(dir) = std::env::current_dir() {
-            lines.push(StyledOutput::kv_line("CWD", &dir.display().to_string(), kv_width));
+            lines.push(StyledOutput::kv_line(
+                "CWD",
+                &dir.display().to_string(),
+                kv_width,
+            ));
         }
 
         if let Ok(output) = process::Command::new("npm")
@@ -56,11 +60,7 @@ pub fn handle(verbose: bool) -> Result<()> {
     }
 
     // Render as titled section
-    let title = format!(
-        "{} {}",
-        manager,
-        style(format!("v{}", version)).dim(),
-    );
+    let title = format!("{} {}", manager, style(format!("v{}", version)).dim(),);
 
     println!();
     StyledOutput::titled(&title);

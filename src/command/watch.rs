@@ -19,19 +19,13 @@ pub fn handle(script_name: String, patterns: Vec<String>) -> Result<()> {
     };
 
     // ── Watch header card ──
-    let title = format!(
-        "Watch  {}",
-        style(&script_name).cyan(),
-    );
+    let title = format!("Watch  {}", style(&script_name).cyan(),);
 
     println!();
     StyledOutput::titled(&title);
     for (i, pattern) in watch_patterns.iter().enumerate() {
         let is_last = i == watch_patterns.len() - 1;
-        StyledOutput::tree_item(
-            &format!("{}", style(pattern).dim()),
-            is_last,
-        );
+        StyledOutput::tree_item(&format!("{}", style(pattern).dim()), is_last);
     }
     println!();
 
@@ -62,7 +56,12 @@ pub fn handle(script_name: String, patterns: Vec<String>) -> Result<()> {
         std::thread::sleep(Duration::from_millis(500));
 
         let mut changed_files = Vec::new();
-        check_changes_recursive(&current_dir, &watch_patterns, &mut file_times, &mut changed_files);
+        check_changes_recursive(
+            &current_dir,
+            &watch_patterns,
+            &mut file_times,
+            &mut changed_files,
+        );
 
         if !changed_files.is_empty() {
             // Show changed files
