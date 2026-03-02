@@ -4,8 +4,8 @@ use indicatif::{ProgressBar, ProgressStyle};
 const DESCRIPTION: &str = "Minimal, blazing fast Node.js package manager runner";
 
 // Modern color palette
-const COLOR_PRIMARY: Color = Color::Color256(51);    // Cyan
-const COLOR_ACCENT: Color = Color::Color256(213);    // Magenta
+const COLOR_PRIMARY: Color = Color::Color256(51); // Cyan
+const COLOR_ACCENT: Color = Color::Color256(213); // Magenta
 
 // Create a gradient effect for the logo
 fn gradient_text(text: &str) -> String {
@@ -244,7 +244,11 @@ impl StyledOutput {
         println!();
 
         // ── Package Management ──
-        println!("  {} {}", style("📦").bold(), style("Package Management").bold().fg(COLOR_PRIMARY));
+        println!(
+            "  {} {}",
+            style("📦").bold(),
+            style("Package Management").bold().fg(COLOR_PRIMARY)
+        );
         println!();
         Self::help_cmd("install", "i, add", "Install packages");
         Self::help_cmd("uninstall", "rm, remove", "Remove packages");
@@ -253,7 +257,11 @@ impl StyledOutput {
         println!();
 
         // ── Scripts ──
-        println!("  {} {}", style("⚙️").bold(), style("Scripts").bold().fg(COLOR_PRIMARY));
+        println!(
+            "  {} {}",
+            style("⚙️").bold(),
+            style("Scripts").bold().fg(COLOR_PRIMARY)
+        );
         println!();
         Self::help_cmd("run", "r", "Run scripts from package.json");
         Self::help_cmd("list", "ls", "List available scripts");
@@ -262,7 +270,11 @@ impl StyledOutput {
         println!();
 
         // ── Project ──
-        println!("  {} {}", style("🔍").bold(), style("Project").bold().fg(COLOR_PRIMARY));
+        println!(
+            "  {} {}",
+            style("🔍").bold(),
+            style("Project").bold().fg(COLOR_PRIMARY)
+        );
         println!();
         Self::help_cmd("info", "env", "Show environment information");
         Self::help_cmd("view", "", "View package info from registry");
@@ -270,7 +282,11 @@ impl StyledOutput {
         println!();
 
         // ── Other ──
-        println!("  {} {}", style("🛠️").bold(), style("Other").bold().fg(COLOR_PRIMARY));
+        println!(
+            "  {} {}",
+            style("🛠️").bold(),
+            style("Other").bold().fg(COLOR_PRIMARY)
+        );
         println!();
         Self::help_cmd("upgrade-self", "", "Upgrade kn to latest version");
         Self::help_cmd("help", "-h", "Show this help");
@@ -294,10 +310,18 @@ impl StyledOutput {
 
     fn help_cmd(name: &str, aliases: &str, desc: &str) {
         if aliases.is_empty() {
-            println!("    {:<26} {}", style(name).cyan().bold(), style(desc).dim(),);
+            println!(
+                "    {:<26} {}",
+                style(name).cyan().bold(),
+                style(desc).dim(),
+            );
         } else {
             let combined = format!("{}, {}", name, aliases);
-            println!("    {:<26} {}", style(&combined).cyan().bold(), style(desc).dim(),);
+            println!(
+                "    {:<26} {}",
+                style(&combined).cyan().bold(),
+                style(desc).dim(),
+            );
         }
     }
 
