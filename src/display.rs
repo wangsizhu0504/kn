@@ -3,6 +3,10 @@ use indicatif::{ProgressBar, ProgressStyle};
 
 const DESCRIPTION: &str = "Minimal, blazing fast Node.js package manager runner";
 
+// Modern color palette
+const COLOR_PRIMARY: Color = Color::Color256(51);    // Cyan
+const COLOR_ACCENT: Color = Color::Color256(213);    // Magenta
+
 // Create a gradient effect for the logo
 fn gradient_text(text: &str) -> String {
     let colors = [
@@ -176,12 +180,12 @@ impl StyledOutput {
         let pb = ProgressBar::new_spinner();
         pb.set_style(
             ProgressStyle::default_spinner()
-                .tick_strings(&["⠋", "⠙", "⠹", "⠸", "⠼", "⠴", "⠦", "⠧", "⠇", "⠏"])
+                .tick_strings(&["◐", "◓", "◑", "◒"])
                 .template("  {spinner:.cyan} {msg}")
                 .unwrap(),
         );
         pb.set_message(text.to_string());
-        pb.enable_steady_tick(std::time::Duration::from_millis(80));
+        pb.enable_steady_tick(std::time::Duration::from_millis(100));
         Spinner { pb: Some(pb) }
     }
 
@@ -190,10 +194,16 @@ impl StyledOutput {
     // ════════════════════════════════════════════════
 
     pub fn completion(duration_secs: f64) {
+        let duration_text = if duration_secs < 1.0 {
+            format!("{:.0}ms", duration_secs * 1000.0)
+        } else {
+            format!("{:.2}s", duration_secs)
+        };
+
         println!(
             "\n  {} {}",
-            style("✔").green(),
-            style(format!("Done in {:.2}s", duration_secs)).dim(),
+            style("✨").bold(),
+            style(format!("Done in {}", duration_text)).green().italic(),
         );
     }
 
@@ -208,9 +218,9 @@ impl StyledOutput {
             "  {} {} {} {} {}",
             style("⚡").color256(226).bold(),
             gradient_text("kn"),
-            style(version).color256(99),
-            style("—").dim(),
-            style(DESCRIPTION).color256(208),
+            style(version).fg(COLOR_ACCENT).bold(),
+            style("━").dim(),
+            style(DESCRIPTION).color256(208).italic(),
         );
         println!();
     }
@@ -227,14 +237,14 @@ impl StyledOutput {
             "  {} {} {} {} {}",
             style("⚡").color256(226).bold(),
             gradient_text("kn"),
-            style(version).color256(99),
-            style("—").dim(),
-            style(DESCRIPTION).color256(208),
+            style(version).fg(COLOR_ACCENT).bold(),
+            style("━").dim(),
+            style(DESCRIPTION).color256(208).italic(),
         );
         println!();
 
         // ── Package Management ──
-        println!("  {}", style("Package Management").bold());
+        println!("  {} {}", style("📦").bold(), style("Package Management").bold().fg(COLOR_PRIMARY));
         println!();
         Self::help_cmd("install", "i, add", "Install packages");
         Self::help_cmd("uninstall", "rm, remove", "Remove packages");
@@ -243,7 +253,7 @@ impl StyledOutput {
         println!();
 
         // ── Scripts ──
-        println!("  {}", style("Scripts").bold());
+        println!("  {} {}", style("⚙️").bold(), style("Scripts").bold().fg(COLOR_PRIMARY));
         println!();
         Self::help_cmd("run", "r", "Run scripts from package.json");
         Self::help_cmd("list", "ls", "List available scripts");
@@ -252,7 +262,7 @@ impl StyledOutput {
         println!();
 
         // ── Project ──
-        println!("  {}", style("Project").bold());
+        println!("  {} {}", style("🔍").bold(), style("Project").bold().fg(COLOR_PRIMARY));
         println!();
         Self::help_cmd("info", "env", "Show environment information");
         Self::help_cmd("view", "", "View package info from registry");
@@ -260,7 +270,7 @@ impl StyledOutput {
         println!();
 
         // ── Other ──
-        println!("  {}", style("Other").bold());
+        println!("  {} {}", style("🛠️").bold(), style("Other").bold().fg(COLOR_PRIMARY));
         println!();
         Self::help_cmd("upgrade-self", "", "Upgrade kn to latest version");
         Self::help_cmd("help", "-h", "Show this help");
@@ -278,23 +288,24 @@ impl StyledOutput {
         Self::help_example("kn view react", "View package details");
         println!();
 
-        Self::dim("Run kn <command> --help for more information.");
+        Self::dim("💡 Tip: Run kn <command> --help for more information");
         println!();
     }
 
     fn help_cmd(name: &str, aliases: &str, desc: &str) {
         if aliases.is_empty() {
-            println!("    {:<26} {}", style(name).cyan(), style(desc).dim(),);
+            println!("    {:<26} {}", style(name).cyan().bold(), style(desc).dim(),);
         } else {
             let combined = format!("{}, {}", name, aliases);
-            println!("    {:<26} {}", style(&combined).cyan(), style(desc).dim(),);
+            println!("    {:<26} {}", style(&combined).cyan().bold(), style(desc).dim(),);
         }
     }
 
     fn help_example(cmd: &str, desc: &str) {
         println!(
-            "    {}  {}",
-            style(format!("{:<24}", cmd)).green(),
+            "    {} {}  {}",
+            style("▸").green(),
+            style(format!("{:<23}", cmd)).green(),
             style(desc).dim(),
         );
     }
@@ -312,7 +323,7 @@ impl StyledOutput {
 
         println!();
         Self::titled(&format!(
-            "{} {}",
+            "📜 {} {}",
             package_name,
             style(format!("v{}", package_version)).dim(),
         ));
@@ -328,8 +339,9 @@ impl StyledOutput {
                     cmd.clone()
                 };
                 Self::body(&format!(
-                    "{:<width$}  {}",
-                    style(name).cyan(),
+                    "{}  {:<width$}  {}",
+                    style("▸").cyan(),
+                    style(name).cyan().bold(),
                     style(&cmd_display).dim(),
                     width = max_key,
                 ));
@@ -337,7 +349,7 @@ impl StyledOutput {
         }
 
         println!();
-        Self::hint("kn r <name>");
+        Self::hint("💡 Run: kn r <name>");
         println!();
     }
 }
